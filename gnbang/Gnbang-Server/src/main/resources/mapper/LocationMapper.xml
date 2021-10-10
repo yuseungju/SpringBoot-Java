@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gnbang.webserver.mapper.LocationMapper">
+	
+	<!-- ********************검색화면 지도의 상단 지역 리스트*********************** -->
+	<!-- 주소에 등록되어 있는 시들을 가져옴 -->
+   <select id ="getSiList" resultType ="String">
+		select distinct(si) from address_code order by `si`;
+   </select>
+	<!-- 주소에 등록되어 있는  '시' 이름과 같은 '구' 값들을  get -->
+   <select id ="getGunguList" resultType ="String" parameterType="String">
+		select distinct(gungu) from address_code where si like #{si} order by `gungu`;
+   </select>
+	<!-- 시와 군의 정보로 주소의 모든값들을  get -->
+   <select id ="getDongAndCodeList" resultType ="com.gnbang.webserver.dto.AddressCodeVO" parameterType="map">
+		select distinct(dong) as dong, code from address_code 
+		where si like #{si} 
+		and gungu like #{gungu} 
+		and not dong REGEXP '[0-9]+' 
+		order by `dong`;
+   </select>
+
+	<!-- ********************방등록시 중개사화면의 상세검색 섹터리스트*********************** -->
+   <select id ="getSectorGuList" resultType ="String">
+		select distinct(gu) from section  order by `gu`;
+   </select>
+   <select id ="getsectorDongAndNoList" resultType ="com.gnbang.webserver.dto.SectorVO" parameterType="String">
+		select no, name from section
+		where gu like #{gu}  
+		and not dong REGEXP '[0-9]+' 
+		order by `name`;
+   </select>
+	
+</mapper>

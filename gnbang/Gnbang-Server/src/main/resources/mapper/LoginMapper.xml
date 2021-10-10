@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gnbang.webserver.mapper.LoginMapper">
+	
+	<!-- ********************검색화면 지도의 상단 지역 리스트*********************** -->
+	<!-- 주소에 등록되어 있는 시들을 가져옴 -->
+   <select id ="getPassword" resultType ="String">
+		select password from user where email = #{email};
+   </select>
+	<!--같은 email이 있으면 가져옴-->
+   <select id ="getEmail" resultType ="String">
+		select email 
+		from user where email = #{email};
+   </select>
+</mapper>

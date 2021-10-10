@@ -1,0 +1,1173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+			"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gnbang.webserver.mapper.RoomMapper">
+	
+	<!-- ***********************방상세보기 정보 출력**************************** -->
+	<!-- 매물번호에 해당되는 방의 상세 정보를 get -->
+	<!-- 우편번호 없으면  안나오게 하는 쿼리사용 시 아래로 대체
+				select * 
+				from  room_item ri, specific_room_item sri, address_code ac 
+				where ri.no = sri.item_no  and ac.code = ri.local_code and sri.item_no =#{no} 
+				limit 1;  -->
+	<select id="getDetailRoomAboutRoomNo" resultType="com.gnbang.webserver.object.SearchRoomDetail"
+		parameterType="Integer" >
+				select * 
+				from room_item ri LEFT JOIN address_code ac  ON ac.code = ri.local_code 
+				, specific_room_item sri
+				where ri.no = sri.item_no  and sri.item_no =#{no} 
+				limit 1; 
+	</select>
+	<!-- 방을 등록한 중개사 회원의 이름을 가져옴 -->
+	<select id="getManageName" resultType="String" parameterType="Integer" >
+				select u.name 
+				from room_item ri, specific_room_item sri, user u, role r
+				where u.no = sri.user_no and ri.no = sri.item_no and r.user_no = u.no and r.role_list_no = 5 and ri.no = #{roomNo};
+	</select>
+	<!-- 방등록한 중개사회원의 연락처를 가져옴-->
+	<select id="getManagePhone" resultType="String" parameterType="Integer" >
+				select u.phone 
+				from room_item ri, specific_room_item sri, user u, role r
+				where u.no = sri.user_no and ri.no = sri.item_no and r.user_no = u.no and r.role_list_no = 5 and ri.no = #{roomNo};
+	</select>
+	<!-- 방의 사진을 최초로 등록한 중개사 회원의 이름-->
+	<select id="getPhotoManageName" resultType="String" parameterType="Integer" >
+				select u.name 
+				from room_photo rp, user u, role r
+				where rp.user_no = u.no and r.user_no = u.no and r.role_list_no = 5 and rp.room_item_no = #{roomNo} 
+				order by rp.date asc
+				limit 1;			
+	</select>
+	<!-- 방의 사진을 최초로 등록한 중개사 회원의 이름-->
+	<select id="getPhotoManagePhone" resultType="String" parameterType="Integer" >
+				select u.phone 
+				from room_photo rp, user u, role r
+				where rp.user_no = u.no and r.user_no = u.no and r.role_list_no = 5 and rp.room_item_no = #{roomNo} 
+				order by rp.date asc
+				limit 1;			
+	</select>
+	
+	<!-- ***********************찜 하기**************************** -->
+	<!-- 찜추가 -->
+	<insert id="addZzim" parameterType="com.gnbang.webserver.dto.ZzimVO" >
+				insert into zzim(`user_no`, `room_item_no`) values(#{user_no}, #{room_item_no});
+	</insert>
+	<!-- 찜삭제 -->
+	<delete id="delZzim" parameterType="com.gnbang.webserver.dto.ZzimVO" >
+				delete from zzim where user_no= #{user_no} and room_item_no = #{room_item_no};
+	</delete>
+	<!-- 회원이 찜한매물들을 가져옴 -->
+	<select id="getSpecificRoomItemAboutGeoZzim" resultType="com.gnbang.webserver.object.SearchRoomSumary"
+		 parameterType="map"  >
+			SELECT *
+		        from room_item ri 
+		        , specific_room_item sri, address_code ac  , zzim z
+		    <![CDATA[	
+		    	where sri.item_no = ri.no 
+				and  #{s} <lat  and lat < #{n} and  #{w} <lng and lng < #{e} and ac.code = ri.local_code
+				and z.room_item_no = ri.no and z.user_no = #{userNo}
+		    ]]>	
+			order by ${sort}
+			limit #{pg}, #{roomNumPerPage};
+	</select>
+	<!-- 매물에대한 찜수를 가져옴 -->
+	<select id ="getCountInZzimAboutRoomItemNo" resultType="Integer" parameterType ="Integer">
+			select count(*) 
+			from zzim 
+			where room_item_no = #{room_item_no};
+	</select>
+	<!-- 회원이 찜한매물의 개수를 가져옴 -->
+	<select id="getCountRoomAboutGeoZzim" resultType="Integer"
+		 parameterType="map"  >
+			SELECT count(*) 
+		        from room_item ri 
+		        , specific_room_item sri, address_code ac  , zzim z
+		    <![CDATA[	
+		    	where sri.item_no = ri.no 
+		    	 and z.room_item_no = ri.no and z.user_no = #{userNo}
+				 and  #{s} <lat  and lat < #{n} and  #{w} <lng and lng < #{e} and ac.code = ri.local_code
+		    ]]>	
+	</select>
+	
+	<!-- ***********************조회수 **************************** -->
+	<!-- 조회수 수정-->
+	<update id="updateReadCntInSpeicificRoomItem" parameterType="map" >
+			update specific_room_item set read_cnt = #{ read_cnt } where item_no = #{room_item_no};
+	</update>
+	<!-- 매물번호에 해당되는 조회수 가져오기 -->
+	<select id="getReadCntInSpeicificRoomItemAboutRoomNo" resultType="Integer" parameterType="Integer" >
+			select ifnull(read_cnt , 0) from specific_room_item where item_no = #{room_item_no};
+	</select>
+	
+	<!-- **********************최근본방 **************************** -->
+	<!-- 회원의 최근기록 개수를 가져옴 -->
+	<select id="getCountRecently" resultType="Integer" parameterType="Integer" >
+				select count(*) from recently where `user_no` = #{loginNo}
+	</select>
+	<!-- 최근본방 추가 -->
+	<insert id="addRecently" parameterType="com.gnbang.webserver.dto.RecentlyVO" >
+				insert into recently(`user_no`, `room_item_no`) values(#{user_no}, #{room_item_no});
+	</insert>
+	<!-- 최근본방 삭제-->
+	<delete id="deleteRecently" parameterType="com.gnbang.webserver.dto.ZzimVO" >
+				delete from recently where `user_no` = #{user_no} and `room_item_no` = #{room_item_no};
+	</delete>
+	<!-- 가장오랜된 '최근본방의 행'을 삭제-->
+	<delete id="deleteRecentlyAboutOldest" parameterType="com.gnbang.webserver.dto.ZzimVO" >
+   				delete from recently where `user_no` = #{loginNo} order by date asc limit 1;
+	</delete>
+
+	<!-- 회원이 최근본방을 가져옴 -->
+	<select id="getSpecificRoomItemAboutGeoRecently" resultType="com.gnbang.webserver.object.SearchRoomSumary"
+		 parameterType="map"  >
+			SELECT *
+		        from room_item ri 
+		        , specific_room_item sri, address_code ac  , recently r
+		    <![CDATA[	
+		    	where sri.item_no = ri.no 
+				and  #{s} <lat  and lat < #{n} and  #{w} <lng and lng < #{e} and ac.code = ri.local_code
+				and  r.room_item_no = ri.no and r.user_no = #{userNo}
+		    ]]>	
+			order by ${sort}
+			limit #{pg}, #{roomNumPerPage};
+	</select>
+	<!-- 회원이 최근본방의 개수를 가져옴 -->
+	<select id="getCountRoomAboutGeoRecently" resultType="Integer"
+		 parameterType="map"  >
+			SELECT count(*)
+		        from room_item ri 
+		        , specific_room_item sri, address_code ac  , recently r
+		    <![CDATA[	
+		    	where sri.item_no = ri.no 
+				and  #{s} <lat  and lat < #{n} and  #{w} <lng and lng < #{e} and ac.code = ri.local_code
+				and  r.room_item_no = ri.no and r.user_no = #{userNo}
+		    ]]>	
+	</select>
+
+	
+	<!-- ***********************방상세보기 코멘트 **************************** -->
+	<!-- 매물번호에 해당되는 (방의 상세 정보에서의)코멘트들 get -->
+	<select id="getCommentAboutRoomNo" resultType="com.gnbang.webserver.object.NoteComment"
+		parameterType="Integer" >
+				select * 
+				from  note n ,user u 
+				where u.no = n.user_no and n.room_item_no =  #{no} 
+				order by  n.date desc;
+	</select>
+	<!-- 매물번호와 중개사 번호에 해당되는 (방의 상세 정보에서의)코멘트들 get (1개만 존재하게 되는 값)-->
+	<select id="getCommentAboutUserNoAndRoomItemNo" resultType="com.gnbang.webserver.dto.NoteVO"
+		parameterType="map" >	
+				select * from 
+				note n where `room_item_no` = #{roomItemNo} and `user_no` = #{userNo};
+	</select>
+	<!-- 매물번호와 중개사 번호에 해당되는 (방의 상세 정보에서의)코멘트들 추가-->
+	<insert id="insertComment" parameterType="com.gnbang.webserver.dto.NoteVO" >
+				insert note(`user_no`, `room_item_no`, `text`) 
+				values(#{user_no},#{room_item_no},#{text});
+	</insert>
+	
+	
+	<!-- ***********************방상세보기 수정내역요청**************************** -->
+	<!-- 해당되는 중개사번호로 수정요청내역을  get (1개만 존재하게 되는 값)-->
+	<select id="getModifyContent" resultType="com.gnbang.webserver.dto.AdminInformationModifyVO"
+			parameterType="Integer" >	
+			select * from 
+			admin_information_modify 
+			where `user_no` = #{ user_no } and room_no = #{ room_no }  limit 1;
+	</select>
+	<!-- 방의 수정내역 추가 (중개사 번호 / 수정내역) -->
+	<insert id="insertModifyContent" parameterType="com.gnbang.webserver.dto.AdminInformationModifyVO" >	
+			insert into admin_information_modify(`user_no`, `text`,`room_no`) 
+			values (#{user_no}, #{text}, #{room_no});
+	</insert>	
+	<update id ="updateModifyContent" parameterType ="com.gnbang.webserver.dto.AdminInformationModifyVO">
+			update admin_information_modify 
+			set `text` = #{text}
+			where `user_no` = #{user_no} and `room_no` = #{room_no};
+	</update>
+	
+	
+	<!-- ************************방상세보기 매물 담기/ 임대인 연락처보기**************************** -->	
+	<!-- 고객 이름 전화번호(name)가 같은 고객정보를  get (1개만 존재하게 되는 값)-->
+	<select id="getCartListAdoutNameAndAgentNo" resultType="com.gnbang.webserver.dto.RoomItemCartListVO"
+			parameterType="com.gnbang.webserver.dto.RoomItemCartListVO" >	
+			 select * 
+			 from room_item_cart_list
+			 where `name` = #{name} and user_no = #{user_no};
+	</select>
+	<!-- 고객정보(이름,연락처)로 회원을 get-->
+	<select id="getUserNameAndPhone" resultType="com.gnbang.webserver.dto.UserVO"
+			parameterType="com.gnbang.webserver.dto.UserVO" >	
+  			select * from user  where `name` like concat(#{name},'%') and  `phone` like concat(#{phone},'%') ;
+	</select> 
+	<!--  중개사 번호로 추가한 매물담기고객정보를 가져옴 -->
+	<select id="getRoomItemCartListUser" parameterType = "Integer" resultType ="com.gnbang.webserver.object.CartUser">
+			select * from room_item_cart ric, room_item_cart_list ricl ,
+            specific_room_item sri, room_item ri, address_code ac
+			where ric.room_item_cart_list_no = ricl.no 
+			and  ricl.user_no = #{agentNo} and sri.item_no = ric.room_item_no and sri.item_no = ri.no 
+            and ac.code = ri.local_code
+            order by ricl.name;
+	</select>
+	<!-- 고객정보(이름,연락처)로 고객폴더의 관심매물및 폴더정보를 get-->
+	<select id="getCartUserDetailAboutCartUserListNoAndUserNo" resultType="com.gnbang.webserver.object.CartUserDetail"
+			parameterType="map" >	
+			select *, ricl.date as date, ri.no as no, ric.no as room_item_cart_no
+			from room_item ri, room_item_cart ric, room_item_cart_list ricl, specific_room_item sri,address_code ac
+			where  ric.room_item_cart_list_no = ricl.no and ri.no = ric.room_item_no  and  sri.item_no = ri.no and ac.code = ri.local_code
+            and ric.room_item_cart_list_no = #{roomItemCartListNo}
+            and ricl.user_no = #{agentNo};
+
+	</select> 
+	<!-- 고객폴더에 존재하는 관심매물수 get-->
+	<select id="getCountCartUserAboutCartUserListNo" resultType="Integer" parameterType="Integer" >	
+			select count(*) 
+			from room_item_cart
+			where room_item_cart_list_no = #{roomItemCartListNo};
+  	</select> 
+	<!-- 관심고객(관심매물폴더)의 정보 추가 -->
+	<insert id="insertRoomItemCartList" parameterType="com.gnbang.webserver.dto.RoomItemCartListVO" >	
+			 insert into room_item_cart_list(`user_no` , `name`, `explain`, `client_no`)
+			 values( #{user_no}, #{name}, #{explain} , #{client_no});
+	</insert>
+	<!-- 고객(관심매물폴더)에 매핑되는 중개사를 바꿈(고객폴더는유지)-->
+	<update id ="updateAgentNoInRoomItemCartList" parameterType ="map">
+            update room_item_cart_list set user_no = #{agentNo}  where no = #{no};
+	</update>
+	
+	<!-- 해당 중개사에 존재하는 모든 관심고객 정보리스트를 get -->
+	<select id="getRoomItemListAboutAgentNo" resultType="com.gnbang.webserver.dto.RoomItemCartListVO" parameterType="Integer">
+			select* from room_item_cart_list  
+	        where user_no = #{agentNo};
+	</select>
+	<!-- 해당 고객폴더의 정보를 수정 -->
+	<update id="updateCartUserAboutCartListNo"  parameterType="com.gnbang.webserver.dto.RoomItemCartListVO">
+		update  room_item_cart_list set `explain` = #{explain}, `name`= #{name} where no = #{no};
+	</update>
+	<!-- 관심고객의 정보번호와 관심매물번호 추가(관심매물추가) -->
+	<insert id="insertRoomItemCart" parameterType="com.gnbang.webserver.dto.RoomItemCartVO" >	
+			insert into room_item_cart(`room_item_cart_list_no`, `room_item_no`) 
+			values(#{room_item_cart_list_no},#{room_item_no});
+	</insert>
+	<!-- 관심고객폴더내에 관심매물번호 삭제(관심매물삭제) -->
+	<delete id="deleteRoomItemCart" parameterType="Integer" >	
+			delete from room_item_cart where no = #{no};
+	</delete>
+	<!-- 매물번호와 고객정보가 일치하는 관심매물  get (1개만 존재하게 되는 값, 중복확인시 사용)-->
+	<select id="getRoomItemCartAboutRoomItemCartNoAndRoomNo" resultType="com.gnbang.webserver.dto.RoomItemCartVO"
+			parameterType="com.gnbang.webserver.dto.RoomItemCartVO" >	
+			select* 
+			from room_item_cart 
+			where `room_item_cart_list_no` = #{room_item_cart_list_no}
+			and room_item_no = #{room_item_no};
+	</select> 
+	<!-- ***********************임대인 연락처***************************** -->	
+	<!-- 임대인 연락처 확인 기록 추가 -->
+	<insert id="insertLessorPhoneHistory" parameterType="com.gnbang.webserver.dto.LessorPhoneHistoryVO" >	
+			insert into lessor_phone_history(`user_no`, `cart_list_no`, `room_item_no`) 
+			values(#{user_no} ,#{cart_list_no}, #{room_item_no});
+	</insert>
+	<!-- 임대인 연락처가져오기-->
+	<select id="getSepcificRoomItemAboutItemNo" resultType="com.gnbang.webserver.object.LessorInfor"
+			parameterType="Integer">	
+			select * 
+			from room_item ri,  specific_room_item sri
+			where sri.item_no =  ri.no and ri.no = #{roomItemNo};	
+	</select> 
+	
+	<!-- ***********************매물 담당자 연락처***************************** -->	
+		<!-- 매물 담당자 연락처 확인 기록 추가 -->
+	<insert id="insertAllInfroInRoomPhoneHistory" parameterType="map">	
+			insert into room_phone_history(`user_no`,`room_item_no`) values(#{loginNo}, #{roomNo});
+	</insert>
+	<!-- 매물담당 연락처 확인 기록 정보를 가져옴()-->
+	<select id="getNoInRoomPhoneHistoryAboutRoomNoAndLoginNo" resultType="com.gnbang.webserver.dto.RoomPhoneHistoryVO" parameterType="map">	
+			select * from  room_phone_history where user_no = #{loginNo} and room_item_no = #{roomNo};
+	</select> 
+	
+	<!-- *********************** 계약 완료 **************************** -->	
+	<!-- 관심고객의 정보번호와 괌심매물번호 추가(관심매물추가) -->
+	<insert id="insertCompleteContract" parameterType="com.gnbang.webserver.dto.ContractCompleteVO" >	
+			insert into contract_complete( `user_no`,`room_item_no`, `check` ) 
+			values(#{user_no},#{room_item_no},#{check});
+	</insert> 
+	<!--  매물번호로 매물정보를 가져옴 -->
+	<select id="getSpecificRoomItem" parameterType = "Integer" resultType ="com.gnbang.webserver.dto.SpecificRoomItemVO">
+			select * 
+			from specific_room_item 
+			where  item_no = #{roomItemNo} limit 1;
+	</select>
+	<!-- 현재매물정보를 이전 매물정보(매물에서 계약완료된 상태) 저장 -->
+	<insert id="addSpecificRoomItemPrev" parameterType = "Integer">
+    		insert into specific_room_item_prev(`user_no`,`item_no`,`close`,
+				`close_reason`,`recommend`,`urgent_sale`,
+				`apartment`,`officetel`,`house`,
+				`normal_room`,`full_option_room`,`shop`,
+				`office`,`building`,`redevelopment`,
+				`land`,`event`,`all_floor`,`floor_no`,`semi_basement`,
+				`rooftop` ,`built`,`room_count`,`room_count_onepointfive`,
+				`bathroom_count`,`room_type`,`empty`,`type`,
+				`leased_area`,`exclusive_area` ,`move_now`,`move_modify`,
+				`move_day`,`brokerage`,`sale_price`,`standard_deposit`,
+				`charter_deposit` ,`deposit` ,`monthly_rent` ,`maintenance_cost`,
+				`deposit_modify`,`in_electronic_bill`,`in_gas_bill`,
+				`in_water_bill` ,`in_internet_bill`,
+				`in_tv_bill`,`in_clean_fee`,
+				`airconditioner`,`refrigerator`,
+				`washer`,`tv`,`microwave`,`induction`,
+				`gasrange`,`bed`,`built_in_closet`,`closet`,
+				`dressing_table`,`veranda`,`security`,
+				`digital_doorlock`,`other_option`,
+				`elevator`,`animal` ,`parking` ,`parking_free`,
+				`parking_count`,`parking_option`,
+				`heating_type`,`detail`,`requirement`,
+				`movie_url`,`z_explain`,`contact_who_1`,
+				`contact_phone_1`,`contact_who_2`,`contact_phone_2`,
+				`contact_who_3`,`contact_phone_3`,`contact_who_4`,
+				`contact_phone_4`,`confirm_date`,`read_cnt`,
+				`photo_open`,`snum` )
+ 
+			select 
+				 `user_no`,`item_no`,`close`,
+				`close_reason`,`recommend`,`urgent_sale`,
+				`apartment`,`officetel`,`house`,
+				`normal_room`,`full_option_room`,`shop`,
+				`office`,`building`,`redevelopment`,
+				`land`,`event`,`all_floor`,`floor_no`,`semi_basement`,
+				`rooftop` ,`built`,`room_count`,`room_count_onepointfive`,
+				`bathroom_count`,`room_type`,`empty`,`type`,
+				`leased_area`,`exclusive_area` ,`move_now`,`move_modify`,
+				`move_day`,`brokerage`,`sale_price`,`standard_deposit`,
+				`charter_deposit` ,`deposit` ,`monthly_rent` ,`maintenance_cost`,
+				`deposit_modify`,`in_electronic_bill`,`in_gas_bill`,
+				`in_water_bill` ,`in_internet_bill`,
+				`in_tv_bill`,`in_clean_fee`,
+				`airconditioner`,`refrigerator`,
+				`washer`,`tv`,`microwave`,`induction`,
+				`gasrange`,`bed`,`built_in_closet`,`closet`,
+				`dressing_table`,`veranda`,`security`,
+				`digital_doorlock`,`other_option`,
+				`elevator`,`animal` ,`parking` ,`parking_free`,
+				`parking_count`,`parking_option`,
+				`heating_type`,`detail`,`requirement`,
+				`movie_url`,`z_explain`,`contact_who_1`,
+				`contact_phone_1`,`contact_who_2`,`contact_phone_2`,
+				`contact_who_3`,`contact_phone_3`,`contact_who_4`,
+				`contact_phone_4`,`confirm_date`,`read_cnt`,
+				`photo_open`,`snum` 
+			from specific_room_item 
+			where item_no = #{specificRoomItemNo};
+	</insert>
+	<!--  매물정보를 삭제 -->
+	<delete id="removeSpecificRoomItem" parameterType = "com.gnbang.webserver.dto.SpecificRoomItemVO">
+      		delete 
+      		from specific_room_item 
+      		where item_no = #{specificRoomItemNo};
+	</delete>
+	
+	
+	<!-- ************************허위 매물 신고**************************** -->	
+	<!--허위 매물  신고 추가 -->
+	<insert id="insertRoomFakeReport" parameterType="com.gnbang.webserver.dto.RoomFakeReportVO" >	
+			insert  into room_fake_report(`user_no`, `room_item_no`, `text`) 
+			values(#{user_no}, #{room_item_no}, #{text});
+	</insert> 
+	<!--허위 매물 신고 정보 가져오기 -->
+	<select id="getFakeContent" resultType ="com.gnbang.webserver.dto.RoomFakeReportVO" parameterType ="com.gnbang.webserver.dto.RoomFakeReportVO">
+			select * 
+			from  room_fake_report 
+			where `user_no` = #{user_no} and room_item_no = #{room_item_no} limit 1;
+	</select>
+	<update id="updateRoomFakeReport" parameterType="com.gnbang.webserver.dto.RoomFakeReportVO" >	
+			update room_fake_report 
+			set  `text`= #{text}
+			where `user_no` = #{user_no} and `room_item_no` =  #{room_item_no};
+	</update>
+	
+	
+	<!-- ***********************상담신청**************************** -->	
+	<!--상담신청 내역 가져오기 -->
+	<select id="getConsult" resultType ="com.gnbang.webserver.dto.ConsultVO" parameterType ="com.gnbang.webserver.dto.ConsultVO">
+       		select * 
+       		from consult 
+       		where `room_item_no` = #{room_item_no} and `user_no` = #{user_no};
+	</select>
+	<!--상담내역 저장 -->
+	<insert id="insertConsult" parameterType="com.gnbang.webserver.dto.ConsultVO" >	
+        	insert into consult(`room_item_no`, `phone` , `user_no`, `comment`) 
+        	values(#{room_item_no}, #{phone}, #{user_no}, #{comment});
+	</insert> 
+	
+	
+	<!-- ***********************사진 등록**************************** -->	
+		<!--상담내역 저장 -->
+	<insert id="insertRoomPhoto" parameterType="com.gnbang.webserver.dto.RoomPhotoVO" >	
+			insert into room_photo(`user_no`,`room_item_no`,`original_url`,`fake_url`, `is_use`, `order`) 
+			values (#{user_no},#{room_item_no},#{original_url},#{fake_url}, #{is_use}, #{order});
+	</insert> 
+	
+	<!-- *********************** 검색시에 가져올 추가 정보**************************** -->	
+	<!-- 매물번호에 맞는 찜번호 get -->
+	<select id="getZzimNo" parameterType ="map" resultType ="Integer">
+			select no 
+			from zzim
+			where room_item_no = #{no} and user_no = #{loginNo};
+	</select>
+	<!-- 매물번호에 맞는 사진 ftp 경로 get -->
+	<select id="getFakeUrlList" parameterType ="Integer" resultType ="String">
+			select fake_url 
+			from room_photo rp, room_item ri 
+			where ri.no = rp.room_item_no 
+			and room_item_no = #{no} 
+			and rp.is_use=1 order by rp.order;
+	</select>
+	<!-- 매물번호에 맞는 사진 ftp 경로 get -->
+	<select id="getPhotoEnrollDateList" parameterType ="Integer" resultType ="String">
+			select date 
+			from room_photo rp, room_item ri 
+			where ri.no = rp.room_item_no 
+			and room_item_no = #{no} 
+			and rp.is_use=1 order by rp.order;
+	</select>
+	
+	<!-- ***********************방 등록 화면*************************** -->	
+	<!--filter( 번호 방번호 지하철번호 섹터번호와 상세필터적용사항)와 중개사에  속하는 방의 정보들을  get -->
+	<!--     from room_item ri LEFT JOIN address_code ac  ON ac.code = ri.local_code  
+			  주소가(address_code) 없는 경우에도 방정보가 나오게 하기 위한 쿼리문 적용
+	-->
+	<select id="getSpecificRoomItemAboutAgent" resultType="com.gnbang.webserver.object.SearchRoomSumary"
+		 parameterType="map" >
+			SELECT   *
+		        from room_item ri LEFT JOIN address_code ac  ON ac.code = ri.local_code 
+		        , specific_room_item sri
+		        <if test="metro_no.toString() != null and metro_no.toString() != '' ">
+		        	, metro m
+		        </if>
+		    <![CDATA[	
+		    	where sri.item_no = ri.no 
+		    	and sri.user_no = #{agentNo}
+		    ]]>
+				<if test="metro_no.toString() != null and metro_no.toString() != '' ">
+				    AND 
+				    (
+				    	 ((m.no = ri.metro1 or m.no = ri.metro2 or m.no = ri.metro3 or m.no = ri.metro4 or m.no = ri.metro5) and m.no = #{metro_no})
+					) 
+				</if>
+				
+				<if test="addr.toString() != null and addr.toString() != '' ">
+				    AND 
+				    (
+				    	ac.code = #{addr} 
+					) 
+				</if>
+				<if test="room_no.toString() != null and room_no.toString() != '' ">
+				    AND 
+				    (
+				    	ri.no = #{room_no} 
+					) 
+				</if>
+				
+		    	<if test="pMap.trade.toString() == 1 
+		    		or pMap.charter.toString() == 2
+		    		or pMap.monthly_and_charter.toString() == 6
+		    		or pMap.monthly.toString() == 4 
+		    		or pMap.short_lease.toString() == 8">
+				    AND 
+				    (
+						<if test="pMap.trade.toString() == 1">                (0 != 1<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.charter.toString() == 2">              (0 != 2<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.monthly_and_charter.toString() == 6">  ((0 != 2<![CDATA[ & ]]>type) and (0 != 4<![CDATA[ & ]]>type))  OR </if>
+						<if test="pMap.monthly.toString() == 4">              (0 != 4<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.short_lease.toString() ==8">           (0 != 8<![CDATA[ & ]]>type) OR </if>
+						FALSE
+					) 
+				</if>
+				
+			    <if test="pMap.depositmax.toString() != 999999999">
+					AND 	deposit <![CDATA[ <= ]]> #{pMap.depositmax }
+				</if>
+				<if test="pMap.depositmin.toString() != 0">
+					AND 	#{pMap.depositmin} <![CDATA[ <= ]]> deposit
+				</if>
+				
+				<if test="pMap.monthmax.toString() != 999999999">
+					AND 	monthly_rent <![CDATA[ <= ]]> #{pMap.monthmax }
+				</if>
+				<if test="pMap.monthmin.toString() != 0">
+					AND 	#{pMap.monthmin} <![CDATA[ <= ]]> monthly_rent
+				</if>
+				
+				<if test="pMap.chartermax.toString() != 999999999">
+					AND 	charter_deposit <![CDATA[ <= ]]> #{pMap.chartermax }
+				</if>
+				<if test="pMap.chartermin.toString() != 0">
+					AND 	#{pMap.chartermin} <![CDATA[ <= ]]> charter_deposit
+				</if>
+				
+				<if test="pMap.standardmax.toString() != 999999999">
+					AND 	standard_deposit <![CDATA[ <= ]]> #{pMap.standardmax }
+				</if>
+				<if test="pMap.standardmin.toString() != 0">
+					AND 	#{pMap.standardmin} <![CDATA[ <= ]]> standard_deposit
+				</if>
+				
+		    	<if test="pMap.apartment.toString() == 1 
+		    		or pMap.officetel.toString() == 1
+		    		or pMap.house.toString() == 1
+		    		or pMap.normal_room.toString() == 1
+		    		or pMap.shop.toString() == 1
+		    		or pMap.office.toString() == 1
+		    		or pMap.building.toString() == 1
+		    		or pMap.redevelopment.toString() == 1
+		    		or pMap.event.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.apartment.toString() == 1">     apartment = 1        OR </if>
+						<if test="pMap.officetel.toString() == 1">     officetel = 1        OR </if>
+						<if test="pMap.house.toString() == 1">  	   house = 1            OR </if>
+						<if test="pMap.normal_room.toString() == 1">   normal_room = 1      OR </if>
+						<if test="pMap.shop.toString() == 1">  		   shop = 1             OR </if>
+						<if test="pMap.office.toString() == 1">  	   office = 1           OR </if>
+						<if test="pMap.building.toString() == 1">      building = 1         OR </if>
+						<if test="pMap.redevelopment.toString() == 1"> redevelopment = 1    OR </if>
+						<if test="pMap.event.toString() == 1">         event = 1            OR </if>
+						FALSE
+					) 
+				</if>
+				AND  built   between  0 AND   #{pMap.built}   
+				<if test="pMap.address.toString() != null and pMap.address.toString() != '' ">
+					AND  main_address = substring_index(#{pMap.address}, '-', 1) 
+						and  sub_address = substring_index(#{pMap.address}, '-', -1)
+ 				</if>
+ 				
+		    	<if test="pMap.open_room.toString() == 1 
+		    		or pMap.part_room.toString() == 1
+		    		or pMap.duplex_room.toString() == 1">
+				    and  
+				    (
+						<if test="pMap.open_room.toString() == 1">    room_type = 1 OR </if>
+						<if test="pMap.part_room.toString() == 1">    room_type = 2 OR </if>
+						<if test="pMap.duplex_room.toString() == 1">  room_type = 3 OR </if>
+						FALSE
+					) 
+				</if> 
+				
+		    	<if test="pMap.one_room.toString() == 1 
+		    		or pMap.two_room.toString() == 1
+		    		or pMap.three_room.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.one_room.toString() == 1">    room_count = 1  OR </if>
+						<if test="pMap.two_room.toString()  == 1">   room_count = 2  OR </if>
+						<if test="pMap.three_room.toString() == 1">  room_count = 3  OR </if>
+						FALSE
+					) 
+				</if>	
+				
+		    	<if test="pMap.up_ground.toString() == 1 
+		    		or pMap.under_ground.toString() == 1
+		    		or pMap.semi_basement.toString() == 1
+		    		or pMap.rooftop.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.semi_basement.toString() == 1"> semi_basement = 1                	 OR </if>
+						<if test="pMap.rooftop.toString() == 1">       rooftop = 1                			 OR </if>
+						<if test="pMap.under_ground.toString() == 1">  floor_no  between -5 and -1 		 	 OR </if>
+						<if test="pMap.up_ground.toString() == 1">     floor_no  between  1 and 90 			 OR </if>
+						FALSE
+					) 
+				</if>	
+					
+			   <if test="pMap.exclusive_area_max.toString() != 999999999">
+					AND 	exclusive_area <![CDATA[ <= ]]> #{pMap.exclusive_area_max }
+				</if>
+				<if test="pMap.exclusive_area_min.toString() != 0">
+					AND 	#{pMap.exclusive_area_min} <![CDATA[ <= ]]> exclusive_area
+				</if>
+					
+				<if test="pMap.leased_area_max.toString() != 999999999">
+					AND 	leased_area <![CDATA[ <= ]]> #{pMap.leased_area_max }
+				</if>
+				<if test="pMap.leased_area_min.toString() != 0">
+					AND 	#{pMap.leased_area_min} <![CDATA[ <= ]]> leased_area
+				</if>
+			    
+		    	<if test="pMap.full_option_room.toString() == 1 or 
+			    	pMap.airconditioner.toString() == 1 or 
+			    	pMap.refrigerator.toString() == 1 or 
+			    	pMap.washer.toString() == 1 or 
+			    	pMap.tv.toString() == 1 or 
+			    	pMap.microwave.toString() == 1 or 
+			    	pMap.induction.toString() == 1 or 
+			    	pMap.sink.toString() == 1 or 
+			    	pMap.gasrange.toString() == 1 or 
+			    	pMap.sofa.toString() == 1 or 
+			    	pMap.bed.toString() == 1 or 
+			    	pMap.built_in_closet.toString() == 1 or 
+			    	pMap.dressing_table.toString() == 1 or 
+			    	pMap.veranda.toString() == 1 or 
+			    	pMap.shoe_closet.toString() == 1 or 
+			    	pMap.door_security.toString() == 1 or 
+			    	pMap.cctv.toString() == 1 or 
+			    	pMap.number_key.toString() == 1 ">
+				    AND  
+				    (
+				    <if test="pMap.full_option_room.toString() == 1">  
+				     	full_option_room = 1          			 AND </if>
+			    	<if test="pMap.airconditioner.toString() == 1"> 
+				     	airconditioner = 1            			 AND </if>
+			    	<if test="pMap.refrigerator.toString() == 1"> 
+				     	refrigerator = 1            			 AND </if>
+			    	<if test="pMap.washer.toString() == 1"> 
+				     	washer = 1                   			 AND </if>
+			    	<if test="pMap.tv.toString() == 1">  
+				     	tv = 1                       			 AND </if>
+			    	<if test="pMap.microwave.toString() == 1"> 
+				     	microwave = 1                			 AND </if>
+			    	<if test="pMap.induction.toString() == 1">  
+				     	induction = 1               			 AND </if>
+			    	<if test="pMap.sink.toString() == 1">
+			    		other_option Like '%싱크대%'   			 AND </if> 
+			    	<if test="pMap.gasrange.toString() == 1"> 
+				     	gasrange = 1                 			 AND </if>
+			    	<if test="pMap.sofa.toString() == 1"> 
+			    	(   other_option Like '%소파%'    or
+			    		other_option Like '%쇼파%'    or
+			    		other_option Like '%sofa%' 
+			    	)  			                                 AND </if>
+			    	<if test="pMap.bed.toString() == 1"> 
+				     	bed = 1                      			 AND </if>
+			    	<if test="pMap.built_in_closet.toString() == 1"> 
+				     	built_in_closet = 1           			 AND </if>
+			    	<if test="pMap.dressing_table.toString() == 1"> 
+				     	dressing_table = 1           			 AND </if>
+			    	<if test="pMap.veranda.toString() == 1">  
+				     	veranda = 1                   			 AND </if> 
+			    	<if test="pMap.shoe_closet.toString() == 1"> 
+			    		other_option Like '%신발%'     			 AND </if>
+			    	<if test="pMap.door_security.toString() == 1"> 
+				     	security = 1                 			 AND </if>
+			    	<if test="pMap.cctv.toString() == 1"> 
+			    		other_option Like '%cctv%'    			 AND </if>  
+			    	<if test="pMap.number_key.toString() == 1"> 
+				     	digital_doorlock = 1         			 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.elevator.toString() == 1 or 
+			    	pMap.parking.toString() == 1 or 
+			    	pMap.animal.toString() == 1 or 
+			    	pMap.empty.toString() == 1 " >
+				    AND  
+				    (
+				    <if test="pMap.elevator.toString() == 1">  
+				     	elevator = 1          				 AND </if>
+			    	<if test="pMap.parking.toString() == 1"> 
+				     	parking = 1            				 AND </if>
+			    	<if test="pMap.animal.toString() == 1"> 
+				     	animal = 1            				 AND </if>
+			    	<if test="pMap.empty.toString() == 1"> 
+				     	empty = 1                   		 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.pic_keep.toString() == 1 or 
+			    	pMap.pic_none.toString() == 1" >
+				    AND  
+				    (
+				    <if test="pMap.pic_keep.toString() == 1">  
+				     	photo  = 1       	   		 	 AND </if>
+			    	<if test="pMap.pic_none.toString() == 1"> 
+				     	photo = 0         	  	 	 	 AND </if>
+			    		TRUE
+					) 
+				</if>			
+		    	<if test="pMap.movie_keep.toString() == 1 or 
+			    	pMap.movie_none.toString() == 1 " >
+				    AND  
+				    (
+			    	<if test="pMap.movie_keep.toString() == 1"> 
+				     	movie_url  is not null     			  AND </if>
+			    	<if test="pMap.movie_none.toString() == 1"> 
+				     	movie_url  is null         			  AND </if>
+			    	    TRUE
+					) 
+				</if>	
+			group by ac.code, ri.no 
+			order by ${sort}
+			limit #{pg}, #{roomNumPerPage};
+	</select>
+	<select id="getCountRoomAboutAgent" resultType="Integer" parameterType="map" >
+			SELECT  count(*)
+		        from room_item ri LEFT JOIN address_code ac  ON ac.code = ri.local_code 
+		        , specific_room_item sri
+		        <if test="metro_no.toString() != null and metro_no.toString() != '' ">
+		        	, metro m
+		        </if>
+		    <![CDATA[	
+		    	where sri.item_no = ri.no 
+		    	and sri.user_no = #{agentNo}
+		    ]]>
+				<if test="metro_no.toString() != null and metro_no.toString() != '' ">
+				    AND 
+				    (
+				    	 ((m.no = ri.metro1 or m.no = ri.metro2 or m.no = ri.metro3 or m.no = ri.metro4 or m.no = ri.metro5) and m.no = #{metro_no})
+					) 
+				</if>
+				
+				<if test="addr.toString() != null and addr.toString() != '' ">
+				    AND 
+				    (
+				    	ac.code = #{addr} 
+					) 
+				</if>
+				<if test="room_no.toString() != null and room_no.toString() != '' ">
+				    AND 
+				    (
+				    	ri.no = #{room_no} 
+					) 
+				</if>
+				
+		    	<if test="pMap.trade.toString() == 1 
+		    		or pMap.charter.toString() == 2
+		    		or pMap.monthly_and_charter.toString() == 6
+		    		or pMap.monthly.toString() == 4 
+		    		or pMap.short_lease.toString() == 8">
+				    AND 
+				    (
+						<if test="pMap.trade.toString() == 1">                (0 != 1<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.charter.toString() == 2">              (0 != 2<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.monthly_and_charter.toString() == 6">  ((0 != 2<![CDATA[ & ]]>type) and (0 != 4<![CDATA[ & ]]>type))  OR </if>
+						<if test="pMap.monthly.toString() == 4">              (0 != 4<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.short_lease.toString() ==8">           (0 != 8<![CDATA[ & ]]>type) OR </if>
+						FALSE
+					) 
+				</if>
+				
+			    <if test="pMap.depositmax.toString() != 999999999">
+					AND 	deposit <![CDATA[ <= ]]> #{pMap.depositmax }
+				</if>
+				<if test="pMap.depositmin.toString() != 0">
+					AND 	#{pMap.depositmin} <![CDATA[ <= ]]> deposit
+				</if>
+				
+				<if test="pMap.monthmax.toString() != 999999999">
+					AND 	monthly_rent <![CDATA[ <= ]]> #{pMap.monthmax }
+				</if>
+				<if test="pMap.monthmin.toString() != 0">
+					AND 	#{pMap.monthmin} <![CDATA[ <= ]]> monthly_rent
+				</if>
+				
+				<if test="pMap.chartermax.toString() != 999999999">
+					AND 	charter_deposit <![CDATA[ <= ]]> #{pMap.chartermax }
+				</if>
+				<if test="pMap.chartermin.toString() != 0">
+					AND 	#{pMap.chartermin} <![CDATA[ <= ]]> charter_deposit
+				</if>
+				
+				<if test="pMap.standardmax.toString() != 999999999">
+					AND 	standard_deposit <![CDATA[ <= ]]> #{pMap.standardmax }
+				</if>
+				<if test="pMap.standardmin.toString() != 0">
+					AND 	#{pMap.standardmin} <![CDATA[ <= ]]> standard_deposit
+				</if>
+				
+		    	<if test="pMap.apartment.toString() == 1 
+		    		or pMap.officetel.toString() == 1
+		    		or pMap.house.toString() == 1
+		    		or pMap.normal_room.toString() == 1
+		    		or pMap.shop.toString() == 1
+		    		or pMap.office.toString() == 1
+		    		or pMap.building.toString() == 1
+		    		or pMap.redevelopment.toString() == 1
+		    		or pMap.event.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.apartment.toString() == 1">     apartment = 1        OR </if>
+						<if test="pMap.officetel.toString() == 1">     officetel = 1        OR </if>
+						<if test="pMap.house.toString() == 1">  	   house = 1            OR </if>
+						<if test="pMap.normal_room.toString() == 1">   normal_room = 1      OR </if>
+						<if test="pMap.shop.toString() == 1">  		   shop = 1             OR </if>
+						<if test="pMap.office.toString() == 1">  	   office = 1           OR </if>
+						<if test="pMap.building.toString() == 1">      building = 1         OR </if>
+						<if test="pMap.redevelopment.toString() == 1"> redevelopment = 1    OR </if>
+						<if test="pMap.event.toString() == 1">         event = 1            OR </if>
+						FALSE
+					) 
+				</if>
+				AND  built   between  0 AND   #{pMap.built}   
+				<if test="pMap.address.toString() != null and pMap.address.toString() != '' ">
+					AND  main_address = substring_index(#{pMap.address}, '-', 1) 
+						and  sub_address = substring_index(#{pMap.address}, '-', -1)
+ 				</if>
+ 				
+		    	<if test="pMap.open_room.toString() == 1 
+		    		or pMap.part_room.toString() == 1
+		    		or pMap.duplex_room.toString() == 1">
+				    and  
+				    (
+						<if test="pMap.open_room.toString() == 1">    room_type = 1 OR </if>
+						<if test="pMap.part_room.toString() == 1">    room_type = 2 OR </if>
+						<if test="pMap.duplex_room.toString() == 1">  room_type = 3 OR </if>
+						FALSE
+					) 
+				</if> 
+				
+		    	<if test="pMap.one_room.toString() == 1 
+		    		or pMap.two_room.toString() == 1
+		    		or pMap.three_room.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.one_room.toString() == 1">    room_count = 1  OR </if>
+						<if test="pMap.two_room.toString()  == 1">   room_count = 2  OR </if>
+						<if test="pMap.three_room.toString() == 1">  room_count = 3  OR </if>
+						FALSE
+					) 
+				</if>	
+				
+		    	<if test="pMap.up_ground.toString() == 1 
+		    		or pMap.under_ground.toString() == 1
+		    		or pMap.semi_basement.toString() == 1
+		    		or pMap.rooftop.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.semi_basement.toString() == 1"> semi_basement = 1                	 OR </if>
+						<if test="pMap.rooftop.toString() == 1">       rooftop = 1                			 OR </if>
+						<if test="pMap.under_ground.toString() == 1">  floor_no  between -5 and -1 		 	 OR </if>
+						<if test="pMap.up_ground.toString() == 1">     floor_no  between  1 and 90 			 OR </if>
+						FALSE
+					) 
+				</if>	
+					
+				<if test="pMap.exclusive_area_max.toString() != 999999999">
+					AND 	exclusive_area <![CDATA[ <= ]]> #{pMap.exclusive_area_max }
+				</if>
+				<if test="pMap.exclusive_area_min.toString() != 0">
+					AND 	#{pMap.exclusive_area_min} <![CDATA[ <= ]]> exclusive_area
+				</if>
+					
+				<if test="pMap.leased_area_max.toString() != 999999999">
+					AND 	leased_area <![CDATA[ <= ]]> #{pMap.leased_area_max }
+				</if>
+				<if test="pMap.leased_area_min.toString() != 0">
+					AND 	#{pMap.leased_area_min} <![CDATA[ <= ]]> leased_area
+				</if>
+			    
+		    	<if test="pMap.full_option_room.toString() == 1 or 
+			    	pMap.airconditioner.toString() == 1 or 
+			    	pMap.refrigerator.toString() == 1 or 
+			    	pMap.washer.toString() == 1 or 
+			    	pMap.tv.toString() == 1 or 
+			    	pMap.microwave.toString() == 1 or 
+			    	pMap.induction.toString() == 1 or 
+			    	pMap.sink.toString() == 1 or 
+			    	pMap.gasrange.toString() == 1 or 
+			    	pMap.sofa.toString() == 1 or 
+			    	pMap.bed.toString() == 1 or 
+			    	pMap.built_in_closet.toString() == 1 or 
+			    	pMap.dressing_table.toString() == 1 or 
+			    	pMap.veranda.toString() == 1 or 
+			    	pMap.shoe_closet.toString() == 1 or 
+			    	pMap.door_security.toString() == 1 or 
+			    	pMap.cctv.toString() == 1 or 
+			    	pMap.number_key.toString() == 1 ">
+				    AND  
+				    (
+				    <if test="pMap.full_option_room.toString() == 1">  
+				     	full_option_room = 1          			 AND </if>
+			    	<if test="pMap.airconditioner.toString() == 1"> 
+				     	airconditioner = 1            			 AND </if>
+			    	<if test="pMap.refrigerator.toString() == 1"> 
+				     	refrigerator = 1            			 AND </if>
+			    	<if test="pMap.washer.toString() == 1"> 
+				     	washer = 1                   			 AND </if>
+			    	<if test="pMap.tv.toString() == 1">  
+				     	tv = 1                       			 AND </if>
+			    	<if test="pMap.microwave.toString() == 1"> 
+				     	microwave = 1                			 AND </if>
+			    	<if test="pMap.induction.toString() == 1">  
+				     	induction = 1               			 AND </if>
+			    	<if test="pMap.sink.toString() == 1">
+			    		other_option Like '%싱크대%'   			 AND </if> 
+			    	<if test="pMap.gasrange.toString() == 1"> 
+				     	gasrange = 1                 			 AND </if>
+			    	<if test="pMap.sofa.toString() == 1"> 
+			    	(   other_option Like '%소파%'    or
+			    		other_option Like '%쇼파%'    or
+			    		other_option Like '%sofa%' 
+			    	)  			                                 AND </if>
+			    	<if test="pMap.bed.toString() == 1"> 
+				     	bed = 1                      			 AND </if>
+			    	<if test="pMap.built_in_closet.toString() == 1"> 
+				     	built_in_closet = 1           			 AND </if>
+			    	<if test="pMap.dressing_table.toString() == 1"> 
+				     	dressing_table = 1           			 AND </if>
+			    	<if test="pMap.veranda.toString() == 1">  
+				     	veranda = 1                   			 AND </if> 
+			    	<if test="pMap.shoe_closet.toString() == 1"> 
+			    		other_option Like '%신발%'     			 AND </if>
+			    	<if test="pMap.door_security.toString() == 1"> 
+				     	security = 1                 			 AND </if>
+			    	<if test="pMap.cctv.toString() == 1"> 
+			    		other_option Like '%cctv%'    			 AND </if>  
+			    	<if test="pMap.number_key.toString() == 1"> 
+				     	digital_doorlock = 1         			 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.elevator.toString() == 1 or 
+			    	pMap.parking.toString() == 1 or 
+			    	pMap.animal.toString() == 1 or 
+			    	pMap.empty.toString() == 1 " >
+				    AND  
+				    (
+				    <if test="pMap.elevator.toString() == 1">  
+				     	elevator = 1          				 AND </if>
+			    	<if test="pMap.parking.toString() == 1"> 
+				     	parking = 1            				 AND </if>
+			    	<if test="pMap.animal.toString() == 1"> 
+				     	animal = 1            				 AND </if>
+			    	<if test="pMap.empty.toString() == 1"> 
+				     	empty = 1                   		 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.pic_keep.toString() == 1 or 
+			    	pMap.pic_none.toString() == 1" >
+				    AND  
+				    (
+				    <if test="pMap.pic_keep.toString() == 1">  
+				     	photo  = 1       	   		 	 AND </if>
+			    	<if test="pMap.pic_none.toString() == 1"> 
+				     	photo = 0         	  	 	 	 AND </if>
+			    		TRUE
+					) 
+				</if>			
+		    	<if test="pMap.movie_keep.toString() == 1 or 
+			    	pMap.movie_none.toString() == 1 " >
+				    AND  
+				    (
+			    	<if test="pMap.movie_keep.toString() == 1"> 
+				     	movie_url  is not null     			  AND </if>
+			    	<if test="pMap.movie_none.toString() == 1"> 
+				     	movie_url  is null         			  AND </if>
+			    	    TRUE
+					) 
+				</if>	
+	</select>
+	
+	<!-- ***********************방등록**************************** -->
+	<!--방의 기본정보등록 -->
+	<select id="insertRoomItem" parameterType ="com.gnbang.webserver.object.EnrolledRoom">
+			insert into 
+			room_item(
+				`local_code`, `main_address`, `sub_address`, 
+				`last_address`, `new_address`, `lat`, `lng` , 
+				`metro1`, `metro2`, `metro3` ,`metro4`,`metro5`,
+				`section_no`
+			) 
+			values(
+				#{local_code}, #{main_address}, #{sub_address}, 
+				#{last_address}, #{new_address}, #{lat}, #{lng} , 
+				#{metro1}, #{metro2}, #{metro3} ,#{metro4},#{metro5},#{section_no}
+			);
+	</select>
+	<!-- 매물정보 등록 -->
+	<insert id="insertSpecificRoomItem" parameterType="com.gnbang.webserver.object.EnrolledRoom" >	
+			insert into  
+			specific_room_item (
+				`user_no`,`close`,`close_reason`,`apartment`,
+				`officetel`,`house`,`normal_room`,
+				`shop`,`office`,`building`,`event`,`redevelopment`,
+				`all_floor`,`floor_no`,`semi_basement`,`rooftop`,`built`,
+				`bathroom_count`,`room_count`,`room_count_onepointfive`,
+				`room_type`,`exclusive_area`,`leased_area`,
+				`empty`,`move_now`,`move_modify`,`move_day`,`type`,
+				`standard_deposit`,`charter_deposit`,`deposit`,
+				`monthly_rent`,`maintenance_cost`,`brokerage`,
+				`in_electronic_bill`,`in_gas_bill`,`in_water_bill`,
+				`in_tv_bill`,`in_internet_bill`,`in_clean_fee`,`deposit_modify`,
+				`security`,`digital_doorlock`,`other_option`,`airconditioner`,
+				`refrigerator`,`washer`,`tv`,`microwave`,`induction`,
+				`gasrange`,`bed`,`built_in_closet`,`closet`,`dressing_table`,
+				`veranda`,`elevator`,`animal`,`parking`,`parking_option`,
+				`heating_type`,`detail`,`requirement`,`movie_url`,`contact_who_1`,
+				`contact_phone_1`,`contact_who_2`,`contact_phone_2`,`contact_who_3`,
+				`contact_phone_3`,`item_no`,`photo_open`,`sale_price`
+			)
+			values(
+				#{user_no},#{close},#{close_reason},#{apartment},
+				#{officetel},#{house},#{normal_room},
+				#{shop},#{office},#{building},#{event},#{redevelopment},
+				#{all_floor},#{floor_no},#{semi_basement},#{rooftop},#{built},
+				#{bathroom_count},#{room_count},#{room_count_onepointfive},
+				#{room_type},#{exclusive_area},#{leased_area},
+				#{empty},#{move_now},#{move_modify},#{move_day},#{type},
+				#{standard_deposit},#{charter_deposit},#{deposit},
+				#{monthly_rent},#{maintenance_cost},#{brokerage},
+				#{in_electronic_bill},#{in_gas_bill},#{in_water_bill},
+				#{in_tv_bill},#{in_internet_bill},#{in_clean_fee},#{deposit_modify},
+				#{security},#{digital_doorlock},#{other_option},#{airconditioner},
+				#{refrigerator},#{washer},#{tv},#{microwave},#{induction},
+				#{gasrange},#{bed},#{built_in_closet},#{closet},#{dressing_table},
+				#{veranda},#{elevator},#{animal},#{parking},#{parking_option},
+				#{heating_type},#{detail},#{requirement},#{movie_url},#{contact_who_1},
+				#{contact_phone_1},#{contact_who_2},#{contact_phone_2},#{contact_who_3},
+				#{contact_phone_3},#{item_no},#{photo_open},#{sale_price}
+		);
+	</insert> 
+	<!--방등록자(로그인)번호 -> out:최근등록한 방번호 -->
+	<select id="getRoomItemNo" resultType ="Integer" parameterType ="Integer">
+			select max(no) from room_item;
+	</select>
+	<!--지하철역의 이름과 같은 지하철번호 가져옴-->
+	<select id="getMetroNo" parameterType ="String" resultType ="Integer">
+			select no from metro where name = #{metroName};
+	</select>
+	
+	<!--섹션 이름에 해당되는 섹션 번호를 가져온다-->
+	<select id="getSectionNo" parameterType ="String" resultType ="Integer">
+			select no from section where name = #{sectionName};
+	</select>
+	
+	<!--방번호에 해당되는 중개사의 번호를 가져옴-->
+	<select id="getUserNoAboutRoomNo" parameterType ="Integer" resultType ="Integer">
+			  select user_no from specific_room_item sri where item_no = #{item_no};
+	</select>
+	<!--방번호에 해당되는 사진의 수를 가져옴-->
+	<select id="getPhotoCount" parameterType ="Integer" resultType ="Integer">
+			  select count(*) from room_photo where room_item_no = #{room_item_no}  and is_use=1;
+	</select>
+	
+	<!-- ***********************방삭제**************************** -->
+	<!-- 매물번호에 해당되는 매물정보삭제 -->
+	<delete id="deleteRoomItemAboutNo" parameterType ="Integer">
+		delete from room_item where no = #{ roomItemNo };
+	</delete>
+	<!-- 매물번호에 해당되는 사진경로삭제 -->
+	<delete id="deleteRoomPhotoAboutRoomItemNo" parameterType ="Integer">
+		delete from room_photo where  room_item_no = #{ roomItemNo };
+	</delete>
+	<!-- 로그인한 중개사가 등록한 방상세정보를 삭제 -->
+	<delete id="removeSpecificRoomItemAboutAgentNo" parameterType ="Integer">     		
+		delete 
+   		from specific_room_item 
+   		where user_no = #{agentNo};
+	</delete>
+	<!-- 로그인한 중개사가 등록한 매물정보를 삭제 -->
+	<delete id="deleteRoomItemAboutAgentNo" parameterType ="Integer">
+		delete FROM room_item WHERE no IN (select item_no from specific_room_item  where user_no = #{agentNo});
+	</delete>
+	<!-- 로그인한 중개사가 등록한 모든 사진경로를 삭제 -->
+	<delete id="deleteRoomPhotoAboutAgentNo" parameterType ="Integer">
+		delete from room_photo where  user_no = #{ agentNo };
+	</delete>
+	
+	<!-- ***********************방등록**************************** -->
+	<!--시군구 에 해당되는 주소코드를 가져옴-->
+	<select id="getAddressCode" parameterType ="com.gnbang.webserver.object.Address" resultType ="long">
+			select code from address_code where si like concat('%',concat(#{si},'%')) and gungu like #{gungu} and dong like #{dong} limit 1;
+	</select>
+	<!--주소코드및 방의 번지수가 같은 상세주소를 가져옴-->
+	<select id="getAddressListInSpecificRoomItem" parameterType ="com.gnbang.webserver.object.Address" resultType ="com.gnbang.webserver.object.Address">
+			select ri.no, last_address, main_address, sub_address 
+			from room_item ri, specific_room_item sri
+			where local_code = #{code}
+			and main_address = #{main_address} 
+			and sub_address= #{sub_address}
+			and sri.item_no = ri.no;
+	</select>
+	
+	
+	<!-- ********************** 사진관리 화면*************************** -->	
+	<!-- 중개사가 사진 등록한 사진수정가능 매물들의 정보를 가져옴( 사진수정가능) -->
+	<select id="getSpecificRoomItemAboutPhotoLimit1Day" resultType="com.gnbang.webserver.object.SearchRoomSumary"
+		 parameterType="map" >
+		 SELECT   *
+		        from room_item ri, address_code ac
+		        , specific_room_item sri, (select * from room_photo group by room_item_no) rp
+			    where ac.code = ri.local_code  and sri.item_no = ri.no and rp.room_item_no = ri.no and rp.user_no =  #{agentNo}
+			    <![CDATA[
+				  and (
+						(select  HOUR(TIMEDIFF(NOW() ,  min(date))) from room_photo where room_item_no = ri.no) <= 1148 
+						or 
+			        	(select count(*) from room_photo where room_item_no = ri.no) = 0
+			      )
+		        ]]>	
+			order by sri.date desc
+			limit #{pg}, #{roomNumPerPage};
+	</select>
+	<!-- 중개사가 사진 등록한 사진수정가능 매물들의 총 개수를 가져옴( 사진수정가능) -->
+	<select id="getCountRoomAboutPhotoLimit1Day" resultType="Integer" parameterType="Integer" >
+			SELECT  count(*)
+		        from room_item ri, address_code ac  
+		        , specific_room_item sri,  (select * from room_photo group by room_item_no) rp
+		    	where ac.code = ri.local_code  and sri.item_no = ri.no and rp.room_item_no = ri.no and rp.user_no =  #{agentNo}
+			    <![CDATA[
+				  and (
+						(select  HOUR(TIMEDIFF(NOW() ,  min(date))) from room_photo where room_item_no = ri.no) <= 1148  
+						or 
+			        	(select count(*) from room_photo where room_item_no = ri.no) = 0
+			      )
+		        ]]>
+	</select>
+	<!-- 중개사가 사진 등록한 매물들의 정보를 가져옴( 사진수정가능) -->
+	<select id="getSpecificRoomItemAboutPhoto" resultType="com.gnbang.webserver.object.SearchRoomSumary"
+		 parameterType="map" >
+		 SELECT   *
+		        from room_item ri, address_code ac 
+		        , specific_room_item sri, (select * from room_photo group by room_item_no) rp
+			    where ac.code = ri.local_code  and sri.item_no = ri.no and rp.room_item_no = ri.no and rp.user_no =  #{agentNo}
+			order by sri.date desc
+			limit #{pg}, #{roomNumPerPage};
+	</select>
+	<!-- 중개사가 사진 등록한 매물들의 총 개수를 가져옴( 사진수정가능) -->
+	<select id="getCountRoomAboutPhoto" resultType="Integer" parameterType="Integer" >
+			SELECT  count(*)
+		        from room_item ri, address_code ac 
+		        , specific_room_item sri,  (select * from room_photo group by room_item_no) rp
+		    	where ac.code = ri.local_code  and  sri.item_no = ri.no and rp.room_item_no = ri.no and rp.user_no =  #{agentNo}
+	</select>
+	<!-- 입력날짜가 현재기준으로 하루이상 차이가 있는지 확인 -->
+	<select id="timeIsIn1Day" resultType="boolean" parameterType="map" >
+	     <![CDATA[ select  HOUR(TIMEDIFF(NOW() , #{date})) <= 1148]]>;
+	</select>
+	<!-- 매물번호에 해당되는 사진테이블 정보를 가져옴 -->
+	<select id="getPhotoAboutRoomNo" resultType="com.gnbang.webserver.dto.RoomPhotoVO" parameterType="Integer" >
+	    select * from room_photo where room_item_no = #{room_no} order by `order`;
+	</select>
+	<!-- 사진의 순서를 수정 -->
+	<update id="updateRoomPhotoOrder" parameterType="map" >
+	    update room_photo set `order` = #{order} where `no` = #{no};
+	</update>
+	<!-- 사진경로삭제 -->
+	<delete id="deleteRoomPhoto" parameterType="Integer" >
+	    delete from room_photo where `no` = #{no};
+	</delete>
+	<!-- 사진이 등록돼있는 매물번호를 가져옴 -->
+	<select id="getRoomItemNoAboutPhotoNo" resultType="Integer" parameterType="Integer" >
+	    select room_item_no from room_photo where no = #{photoNo} limit 1;
+	</select>
+	<!-- 매물번호에 저장된 사진의 개수를 가져옴 -->
+	<select id="getCountPhotoAboutItemNo" resultType="Integer" parameterType="Integer" >
+	    select count(*) from room_photo where room_item_no = #{itemNo};
+	</select>
+	<!-- 매물번호에 해당되는 방상세정보의 사진여부를 변경 -->
+	<update id="updatePhotoOpenInRoomSpecificItemAboutItemNo" parameterType="Integer" >
+		update specific_room_item set `photo_open` = #{photoOpen} where item_no = #{itemNo};
+	</update>
+	<!-- 매물번호에 해당되는 방상세정보의 사진여부를 변경 -->
+	<update id="updatePhotoInRoomItemAboutItemNo" parameterType="Integer" >
+		update room_item set photo = #{photo} where  no = #{itemNo};
+	</update>
+</mapper>
+
+
+
+
+

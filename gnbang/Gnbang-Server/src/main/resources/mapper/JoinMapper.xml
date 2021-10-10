@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gnbang.webserver.mapper.JoinMapper">
+
+	<!-- email이 같은 사용자를 가져온다 -->
+   <select id ="getUser" resultType ="com.gnbang.webserver.dto.UserVO" parameterType="String">
+		select name, email, password, phone, agreement
+		from user 
+		where email = #{ email };
+   </select>
+    <!-- 권한이름으로 권한번호를 get -->
+   <select id ="getRoleNo" resultType ="Integer" parameterType="String">
+		select no 
+		from role_list 
+		where role =#{ role };
+   </select>
+	<!--최근 등록된 회원의 번호를 get -->
+   <select id ="getUserNo" resultType ="Integer">
+		select no 
+		from user
+		order by date desc limit 1;
+   </select>
+    
+    <!-- 일반회원을 등록 -->
+   <insert id ="addUser"  parameterType="com.gnbang.webserver.dto.UserVO">
+		insert into user(name, email, password, phone, agreement, type) 
+		values(#{name},#{email},#{password},#{phone},#{agreement}, #{type});
+   </insert>
+    <!-- 중개사회원 중개사정보 추가 -->
+   <insert id ="addUser_agent"  parameterType="com.gnbang.webserver.dto.UserAgentVO">
+	   insert into user_agent(name, corporate_registration_number, representative, address, phone, user_no, level)
+	   values(#{name}, #{corporate_registration_number}, #{representative}, #{address}, #{phone}, #{user_no}, #{level});
+   </insert>
+   <!-- 가입하는회원의 번호와 회원권한의 번호를 저장 -->
+   <insert id ="addRole"   parameterType="map" >
+		insert into role(user_no, role_list_no) 
+		values(#{userNo}, #{roleNo});
+   </insert>
+   
+
+</mapper>
