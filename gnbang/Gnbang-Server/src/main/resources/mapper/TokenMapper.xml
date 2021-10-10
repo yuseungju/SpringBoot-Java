@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gnbang.webserver.mapper.TokenMapper">
+	<!-- 사용자의 사용 pc인증 토큰을 가져옴 -->
+	<select id="getPcToken"  parameterType="Integer" resultType ="String">
+				select pc_token from user_agent
+				where user_no = #{loginNo};
+	</select>
+</mapper>

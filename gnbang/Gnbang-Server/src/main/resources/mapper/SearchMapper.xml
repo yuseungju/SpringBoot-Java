@@ -1,0 +1,2986 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+			"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gnbang.webserver.mapper.SearchMapper">
+	<!-- *****************************자동완성 기능*************************** -->
+	<!-- 주소 '동'과 같은 주소를 get -->
+	<select id="getSameDong" resultType="com.gnbang.webserver.dto.AddressCodeVO"
+		parameterType="String">
+		<![CDATA[
+			select * 
+			from address_code 
+			where dong like concat(#{dong},'%') 
+			and not dong REGEXP '[0-9]+' 
+			order by dong;
+		]]>
+	</select>
+	<!-- 주소 '구'와 같은 주소를 get -->
+	<select id="getSameGungu" resultType="com.gnbang.webserver.dto.AddressCodeVO"
+		parameterType="map">
+		<![CDATA[
+			select * 
+			from address_code 
+			where gungu like concat(#{gungu},'%') 
+			and not dong REGEXP '[0-9]+' 
+			order by gungu;
+		]]>
+	</select>
+	<!-- 주소 '시'와 같은 주소를 get -->
+	<select id="getSameSi" resultType="com.gnbang.webserver.dto.AddressCodeVO"
+		parameterType="map">
+		<![CDATA[
+			select * 
+			from address_code 
+			where si like  concat(#{si},'%') 
+			and not dong REGEXP '[0-9]+' 
+			order by si, gungu, dong;
+		]]>
+	</select>
+	<!-- 주소 '군/동'동시에 같은 주소를 get -->
+	<select id="getSameGunguDong" resultType="com.gnbang.webserver.dto.AddressCodeVO"
+		parameterType="map">
+		<![CDATA[
+			select * 
+			from address_code 
+			where gungu like concat(#{gungu},'%') 
+			and dong like concat(#{dong},'%')
+			and not dong REGEXP '[0-9]+' 
+			order by si, gungu, dong;
+		]]>
+	</select>
+	<!-- 주소 '시/군'동시에 같은 주소를 get -->
+	<select id="getSameSiGungu" resultType="com.gnbang.webserver.dto.AddressCodeVO"
+		parameterType="map">
+		<![CDATA[
+			select * 
+			from address_code 
+			where si like concat(#{si},'%') 
+			and gungu like concat(#{gungu},'%')
+			and not dong REGEXP '[0-9]+' 
+			order by si, gungu, dong;
+		]]>
+	</select>
+	<!-- 주소 '시/동'동시에 같은 주소를 get -->
+	<select id="getSameSiDong" resultType="com.gnbang.webserver.dto.AddressCodeVO"
+		parameterType="map">
+		<![CDATA[
+			select * 
+			from address_code 
+			where si like  concat(#{si},'%') and 
+			dong like concat(#{dong},'%')
+			and not dong REGEXP '[0-9]+' 
+			order by  gungu, dong , si;
+		]]>
+	</select>
+	<!-- 주소 '시/군/동'동시에 같은 주소를 get -->
+	<select id="getSameSiGunguDong" resultType="com.gnbang.webserver.dto.AddressCodeVO"
+		parameterType="map" >
+		<![CDATA[
+			select * 
+			from address_code 
+			where si like  concat(#{si},'%') 
+			and gungu like  concat(#{gungu},'%') 
+			and dong like  concat(#{dong},'%')
+			and not dong REGEXP '[0-9]+' 
+			order by si, gungu, dong;
+		]]>
+	</select>
+	<!--단어가 포함되는 지하철역 이름을 get -->
+	<select id="getSameMetro" resultType="com.gnbang.webserver.dto.MetroVO"
+		parameterType="String">
+		<![CDATA[
+			select * 
+			from metro 
+			where name like concat(#{name},'%') order by name;
+		]]>
+	</select>
+	<!-- 단어를 포함시키는 번지수 를 get -->
+	<select id="getSameRoomItemAboutBunji" resultType="com.gnbang.webserver.dto.RoomItemVO"
+		parameterType="map" >
+		<![CDATA[	
+			select * from room_item
+			where `main_address` like #{main_address} 
+			and `sub_address` like #{sub_address}
+			order by main_address, sub_address;
+		]]>
+	</select>
+	<!-- 단어를 포함시키는 매물 번호를 get -->
+	<select id="getSameRoomItemAboutNo" resultType="com.gnbang.webserver.dto.RoomItemVO"
+		parameterType="String" >
+		<![CDATA[	
+			select * from room_item 
+			where no like concat(#{no},'%')
+			order by no;
+		]]>
+	</select>
+	
+	<!-- *****************************방 검색 결과 출력************************************ -->
+	<!--filter와 매물 섹터이름에 속하는 방의 정보들을  get -->
+	<select id="getSpecificRoomItemAboutFilterSection" resultType="com.gnbang.webserver.object.SearchRoomSumary"
+		 parameterType="map" >
+			SELECT  *
+		       from room_item ri LEFT JOIN section s ON s.no = ri.section_no
+		       ,specific_room_item sri,  address_code ac
+		    <![CDATA[	
+				where ri.no = sri.item_no and ac.code = ri.local_code
+		    ]]>
+		    <if test="sector_name.toString() != null and sector_name.toString() != '' ">
+		  		 AND (
+			  		 #{sector_name} like s.name 
+			   		 <if test="sector_name.toString() == 'apgujeong1'">
+						OR
+						(ri.main_address between 587  and 629
+						and ac.dong like '압구정%동')
+					 </if>
+					 <if test="sector_name.toString() == 'apgujeong2'">
+						OR
+						(ri.main_address between 630 and 666
+						and ac.dong like '압구정%동')
+					 </if>
+					 <if test="sector_name.toString() == 'banpo1'">
+						OR
+						(ri.main_address between 701 and 748
+						and ac.dong like '반포%동')
+					 </if>
+					 <if test="sector_name.toString() == 'cheongdam1'">
+						OR
+						(ri.main_address between 1 and 47
+						and ac.dong like '청담%동')
+					 </if>
+					 <if test="sector_name.toString() == 'cheongdam2'">
+						OR
+						(ri.main_address between 48 and 77
+						and ac.dong like '청담%동')
+					 </if>
+					 <if test="sector_name.toString() == 'cheongdam3'">
+						OR
+						(ri.main_address between 78 and 129
+						and ac.dong like '청담%동')
+					 </if>
+					 <if test="sector_name.toString() == 'daechi1'">
+						OR
+						(ri.main_address between 889 and 941
+						and ac.dong like '대치%동')
+					 </if>
+					 <if test="sector_name.toString() == 'daechi2'">
+						OR
+						(ri.main_address between 942 and 988
+						and ac.dong like '대치%동')
+					 </if>
+					 <if test="sector_name.toString() == 'dogok1'">
+						OR
+						ac.dong like '도곡%동'
+					 </if>
+					 <if test="sector_name.toString() == 'jamwon1'">
+						OR
+						(ri.main_address between 6 and 48
+						and ac.dong like '잠원%동')
+					 </if>
+					 <if test="sector_name.toString() == 'nonhyeon1'">
+						OR
+						(ri.main_address between 1 and 58
+						and ac.dong like '논현%동')
+					 </if>
+					 <if test="sector_name.toString() == 'nonhyeon2'">
+						OR
+						(ri.main_address between 59 and 90
+						and ac.dong like '논현%동')
+					 </if>
+					 <if test="sector_name.toString() == 'nonhyeon3'">
+						OR
+						(ri.main_address between 91 and 119
+						and ac.dong like '논현%동')
+					 </if>
+					 <if test="sector_name.toString() == 'nonhyeon4'">
+						OR
+						(ri.main_address between 120 and 206
+						and ac.dong like '논현%동')
+					 </if>
+					 <if test="sector_name.toString() == 'nonhyeon5'">
+						OR
+						(ri.main_address between 207 and 237
+						and ac.dong like '논현%동')
+					 </if>
+					 <if test="sector_name.toString() == 'nonhyeon6'">
+						OR
+						(ri.main_address between 238 and 278
+						and ac.dong like '논현%동')
+					 </if>
+					 <if test="sector_name.toString() == 'samsung1'">
+						OR
+						(ri.main_address between 1 and 51
+						and ac.dong like '삼성%동')
+					 </if>
+					 <if test="sector_name.toString() == 'samsung2'">
+						OR
+						(ri.main_address between 52 and 77
+						and ac.dong like '삼성%동')
+					 </if>
+					 <if test="sector_name.toString() == 'samsung3'">
+						OR
+						(ri.main_address between 78 and 111
+						and ac.dong like '삼성%동')
+					 </if>
+					 <if test="sector_name.toString() == 'samsung4'">
+						OR
+						(ri.main_address between 112 and 144
+						and ac.dong like '삼성%동')
+					 </if>
+					 <if test="sector_name.toString() == 'samsung5'">
+						OR
+						(ri.main_address between 145 and 171
+						and ac.dong like '삼성%동')
+					 </if>
+					 <if test="sector_name.toString() == 'seocho1'">
+						OR
+						(ri.main_address between 1301 and 1318
+						and ac.dong like '서초%동')
+					 </if>
+					 <if test="sector_name.toString() == 'seocho2'">
+						OR
+						(ri.main_address between 1319 and 1339
+						and ac.dong like '서초%동')
+					 </if>
+					 <if test="sector_name.toString() == 'seocho3'">
+						OR
+						(ri.main_address between 1340 and 1366
+						and ac.dong like '서초%동')
+					 </if>
+					 <if test="sector_name.toString() == 'sinsa1'">
+						OR
+						(ri.main_address between 501 and 586
+						and ac.dong like '신사%동')
+					 </if>
+					 <if test="sector_name.toString() == 'apgujeong1'">
+						OR
+						(ri.main_address between 587 and 629
+						and ac.dong like '신사%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam1'">
+						OR
+						(ri.main_address between 601 and 649
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam1'">
+						OR
+						(ri.main_address between 808 and 822
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam2'">
+						OR
+						(ri.main_address between 650 and 679
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam3'">
+						OR
+						(ri.main_address between 680 and 705
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam4'">
+						OR
+						(ri.main_address between 706 and 716
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam5'">
+						OR
+						(ri.main_address between 717 and 734
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam5'">
+						OR
+						(ri.main_address between 769 and 788
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam6'">
+						OR
+						(ri.main_address between 735 and 753
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam6'">
+						OR
+						(ri.main_address between 789 and 799
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam6'">
+						OR
+						(ri.main_address between 823 and 840
+						and ac.dong like '역삼%동')
+					 </if>
+		   		 )
+		   		 
+		    </if>
+		    	<if test="pMap.trade.toString() == 1 
+		    		or pMap.charter.toString() == 2
+		    		or pMap.monthly_and_charter.toString() == 6
+		    		or pMap.monthly.toString() == 4 
+		    		or pMap.short_lease.toString() == 8">
+				    AND 
+				    (
+						<if test="pMap.trade.toString() == 1">                (0 != 1<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.charter.toString() == 2">              (0 != 2<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.monthly_and_charter.toString() == 6">  ((0 != 2<![CDATA[ & ]]>type) and (0 != 4<![CDATA[ & ]]>type))  OR </if>
+						<if test="pMap.monthly.toString() == 4">              (0 != 4<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.short_lease.toString() ==8">           (0 != 8<![CDATA[ & ]]>type) OR </if>
+						FALSE
+					) 
+				</if>
+				
+				<if test="pMap.depositmax.toString() != 999999999">
+					AND 	deposit <![CDATA[ <= ]]> #{pMap.depositmax }
+				</if>
+				<if test="pMap.depositmin.toString() != 0">
+					AND 	#{pMap.depositmin} <![CDATA[ <= ]]> deposit
+				</if>
+				
+				<if test="pMap.monthmax.toString() != 999999999">
+					AND 	monthly_rent <![CDATA[ <= ]]> #{pMap.monthmax }
+				</if>
+				<if test="pMap.monthmin.toString() != 0">
+					AND 	#{pMap.monthmin} <![CDATA[ <= ]]> monthly_rent
+				</if>
+				
+				<if test="pMap.chartermax.toString() != 999999999">
+					AND 	charter_deposit <![CDATA[ <= ]]> #{pMap.chartermax }
+				</if>
+				<if test="pMap.chartermin.toString() != 0">
+					AND 	#{pMap.chartermin} <![CDATA[ <= ]]> charter_deposit
+				</if>
+				
+				<if test="pMap.standardmax.toString() != 999999999">
+					AND 	standard_deposit <![CDATA[ <= ]]> #{pMap.standardmax }
+				</if>
+				<if test="pMap.standardmin.toString() != 0">
+					AND 	#{pMap.standardmin} <![CDATA[ <= ]]> standard_deposit
+				</if>
+				
+		    	<if test="pMap.apartment.toString() == 1 
+		    		or pMap.officetel.toString() == 1
+		    		or pMap.house.toString() == 1
+		    		or pMap.normal_room.toString() == 1
+		    		or pMap.shop.toString() == 1
+		    		or pMap.office.toString() == 1
+		    		or pMap.building.toString() == 1
+		    		or pMap.redevelopment.toString() == 1
+		    		or pMap.event.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.apartment.toString() == 1">     apartment = 1        OR </if>
+						<if test="pMap.officetel.toString() == 1">     officetel = 1        OR </if>
+						<if test="pMap.house.toString() == 1">  	   house = 1            OR </if>
+						<if test="pMap.normal_room.toString() == 1">   normal_room = 1      OR </if>
+						<if test="pMap.shop.toString() == 1">  		   shop = 1             OR </if>
+						<if test="pMap.office.toString() == 1">  	   office = 1           OR </if>
+						<if test="pMap.building.toString() == 1">      building = 1         OR </if>
+						<if test="pMap.redevelopment.toString() == 1"> redevelopment = 1    OR </if>
+						<if test="pMap.event.toString() == 1">         event = 1            OR </if>
+						FALSE
+					) 
+				</if>
+				AND  built   between  0 AND   #{pMap.built}   
+				<if test="pMap.address.toString() != null and pMap.address.toString() != '' ">
+					AND  main_address = substring_index(#{pMap.address}, '-', 1) 
+						and  sub_address = substring_index(#{pMap.address}, '-', -1)
+ 				</if>
+ 				
+		    	<if test="pMap.open_room.toString() == 1 
+		    		or pMap.part_room.toString() == 1
+		    		or pMap.duplex_room.toString() == 1">
+				    and  
+				    (
+						<if test="pMap.open_room.toString() == 1">    room_type = 1 OR </if>
+						<if test="pMap.part_room.toString() == 1">    room_type = 2 OR </if>
+						<if test="pMap.duplex_room.toString() == 1">  room_type = 3 OR </if>
+						FALSE
+					) 
+				</if> 
+				
+		    	<if test="pMap.one_room.toString() == 1 
+		    		or pMap.two_room.toString() == 1
+		    		or pMap.three_room.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.one_room.toString() == 1">    room_count = 1  OR </if>
+						<if test="pMap.two_room.toString()  == 1">   room_count = 2  OR </if>
+						<if test="pMap.three_room.toString() == 1">  room_count = 3  OR </if>
+						FALSE
+					) 
+				</if>	
+				
+		    	<if test="pMap.up_ground.toString() == 1 
+		    		or pMap.under_ground.toString() == 1
+		    		or pMap.semi_basement.toString() == 1
+		    		or pMap.rooftop.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.semi_basement.toString() == 1"> semi_basement = 1 or  floor_no = 0	 OR </if>
+						<if test="pMap.rooftop.toString() == 1">       rooftop = 1                			 OR </if>
+						<if test="pMap.under_ground.toString() == 1">  floor_no  between -5 and -1 		 	 OR </if>
+						<if test="pMap.up_ground.toString() == 1">     floor_no  between  1 and 90 			 OR </if>
+						FALSE
+					) 
+				</if>	
+					
+			    <if test="pMap.exclusive_area_max.toString() != 999999999">
+					AND 	exclusive_area <![CDATA[ <= ]]> #{pMap.exclusive_area_max }
+				</if>
+				<if test="pMap.exclusive_area_min.toString() != 0">
+					AND 	#{pMap.exclusive_area_min} <![CDATA[ <= ]]> exclusive_area
+				</if>
+					
+				<if test="pMap.leased_area_max.toString() != 999999999">
+					AND 	leased_area <![CDATA[ <= ]]> #{pMap.leased_area_max }
+				</if>
+				<if test="pMap.leased_area_min.toString() != 0">
+					AND 	#{pMap.leased_area_min} <![CDATA[ <= ]]> leased_area
+				</if>
+			    
+		    	<if test="pMap.full_option_room.toString() == 1 or 
+			    	pMap.airconditioner.toString() == 1 or 
+			    	pMap.refrigerator.toString() == 1 or 
+			    	pMap.washer.toString() == 1 or 
+			    	pMap.tv.toString() == 1 or 
+			    	pMap.microwave.toString() == 1 or 
+			    	pMap.induction.toString() == 1 or 
+			    	pMap.sink.toString() == 1 or 
+			    	pMap.gasrange.toString() == 1 or 
+			    	pMap.sofa.toString() == 1 or 
+			    	pMap.bed.toString() == 1 or 
+			    	pMap.built_in_closet.toString() == 1 or 
+			    	pMap.dressing_table.toString() == 1 or 
+			    	pMap.veranda.toString() == 1 or 
+			    	pMap.shoe_closet.toString() == 1 or 
+			    	pMap.door_security.toString() == 1 or 
+			    	pMap.cctv.toString() == 1 or 
+			    	pMap.number_key.toString() == 1 ">
+				    AND  
+				    (
+				    <if test="pMap.full_option_room.toString() == 1">  
+				     	full_option_room = 1          			 AND </if>
+			    	<if test="pMap.airconditioner.toString() == 1"> 
+				     	airconditioner = 1            			 AND </if>
+			    	<if test="pMap.refrigerator.toString() == 1"> 
+				     	refrigerator = 1            			 AND </if>
+			    	<if test="pMap.washer.toString() == 1"> 
+				     	washer = 1                   			 AND </if>
+			    	<if test="pMap.tv.toString() == 1">  
+				     	tv = 1                       			 AND </if>
+			    	<if test="pMap.microwave.toString() == 1"> 
+				     	microwave = 1                			 AND </if>
+			    	<if test="pMap.induction.toString() == 1">  
+				     	induction = 1               			 AND </if>
+			    	<if test="pMap.sink.toString() == 1">
+			    		other_option Like '%싱크대%'   			 AND </if> 
+			    	<if test="pMap.gasrange.toString() == 1"> 
+				     	gasrange = 1                 			 AND </if>
+			    	<if test="pMap.sofa.toString() == 1"> 
+			    	(   other_option Like '%소파%'    or
+			    		other_option Like '%쇼파%'    or
+			    		other_option Like '%sofa%' 
+			    	)  			                                 AND </if>
+			    	<if test="pMap.bed.toString() == 1"> 
+				     	bed = 1                      			 AND </if>
+			    	<if test="pMap.built_in_closet.toString() == 1"> 
+				     	built_in_closet = 1           			 AND </if>
+			    	<if test="pMap.dressing_table.toString() == 1"> 
+				     	dressing_table = 1           			 AND </if>
+			    	<if test="pMap.veranda.toString() == 1">  
+				     	veranda = 1                   			 AND </if> 
+			    	<if test="pMap.shoe_closet.toString() == 1"> 
+			    		other_option Like '%신발%'     			 AND </if>
+			    	<if test="pMap.door_security.toString() == 1"> 
+				     	security = 1                 			 AND </if>
+			    	<if test="pMap.cctv.toString() == 1"> 
+			    		other_option Like '%cctv%'    			 AND </if>  
+			    	<if test="pMap.number_key.toString() == 1"> 
+				     	digital_doorlock = 1         			 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.elevator.toString() == 1 or 
+			    	pMap.parking.toString() == 1 or 
+			    	pMap.animal.toString() == 1 or 
+			    	pMap.empty.toString() == 1 " >
+				    AND  
+				    (
+				    <if test="pMap.elevator.toString() == 1">  
+				     	elevator = 1          				 AND </if>
+			    	<if test="pMap.parking.toString() == 1"> 
+				     	parking = 1            				 AND </if>
+			    	<if test="pMap.animal.toString() == 1"> 
+				     	animal = 1            				 AND </if>
+			    	<if test="pMap.empty.toString() == 1"> 
+				     	empty = 1                   		 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.pic_keep.toString() == 1 or 
+			    	pMap.pic_none.toString() == 1" >
+				    AND  
+				    (
+				    <if test="pMap.pic_keep.toString() == 1">  
+				     	photo  = 1       	   		 	 AND </if>
+			    	<if test="pMap.pic_none.toString() == 1"> 
+				     	photo = 0         	  	 	 	 AND </if>
+			    		TRUE
+					) 
+				</if>			
+		    	<if test="pMap.movie_keep.toString() == 1 or 
+			    	pMap.movie_none.toString() == 1 " >
+				    AND  
+				    (
+			    	<if test="pMap.movie_keep.toString() == 1"> 
+				     	movie_url  is not null     			  AND </if>
+			    	<if test="pMap.movie_none.toString() == 1"> 
+				     	movie_url  is null         			  AND </if>
+			    	    TRUE
+					) 
+				</if>	
+				<if test="pMap.sale.toString() == 1">
+				    AND  
+				    (
+			    		close = 0 
+					) 
+				</if>
+			order by ${sort}
+			limit #{pg}, #{roomNumPerPage};
+	</select>		
+	<!--filter와 매물 섹터이름에 속하는 방의 개수를 get -->
+	<select id="getCountRoomAboutSection" resultType="Integer"
+		 parameterType="map" >
+			SELECT count(*)
+		       from room_item ri LEFT JOIN section s ON s.no = ri.section_no
+		       ,specific_room_item sri,  address_code ac
+		    <![CDATA[	
+				where ri.no = sri.item_no and ac.code = ri.local_code
+		    ]]>
+		    <if test="sector_name.toString() != null and sector_name.toString() != '' ">
+		  		 AND (
+			  		 #{sector_name} like s.name 
+			   		 <if test="sector_name.toString() == 'apgujeong1'">
+						OR
+						(ri.main_address between 587  and 629
+						and ac.dong like '압구정%동')
+					 </if>
+					 <if test="sector_name.toString() == 'apgujeong2'">
+						OR
+						(ri.main_address between 630 and 666
+						and ac.dong like '압구정%동')
+					 </if>
+					 <if test="sector_name.toString() == 'banpo1'">
+						OR
+						(ri.main_address between 701 and 748
+						and ac.dong like '반포%동')
+					 </if>
+					 <if test="sector_name.toString() == 'cheongdam1'">
+						OR
+						(ri.main_address between 1 and 47
+						and ac.dong like '청담%동')
+					 </if>
+					 <if test="sector_name.toString() == 'cheongdam2'">
+						OR
+						(ri.main_address between 48 and 77
+						and ac.dong like '청담%동')
+					 </if>
+					 <if test="sector_name.toString() == 'cheongdam3'">
+						OR
+						(ri.main_address between 78 and 129
+						and ac.dong like '청담%동')
+					 </if>
+					 <if test="sector_name.toString() == 'daechi1'">
+						OR
+						(ri.main_address between 889 and 941
+						and ac.dong like '대치%동')
+					 </if>
+					 <if test="sector_name.toString() == 'daechi2'">
+						OR
+						(ri.main_address between 942 and 988
+						and ac.dong like '대치%동')
+					 </if>
+					 <if test="sector_name.toString() == 'dogok1'">
+						OR
+						ac.dong like '도곡%동'
+					 </if>
+					 <if test="sector_name.toString() == 'jamwon1'">
+						OR
+						(ri.main_address between 6 and 48
+						and ac.dong like '잠원%동')
+					 </if>
+					 <if test="sector_name.toString() == 'nonhyeon1'">
+						OR
+						(ri.main_address between 1 and 58
+						and ac.dong like '논현%동')
+					 </if>
+					 <if test="sector_name.toString() == 'nonhyeon2'">
+						OR
+						(ri.main_address between 59 and 90
+						and ac.dong like '논현%동')
+					 </if>
+					 <if test="sector_name.toString() == 'nonhyeon3'">
+						OR
+						(ri.main_address between 91 and 119
+						and ac.dong like '논현%동')
+					 </if>
+					 <if test="sector_name.toString() == 'nonhyeon4'">
+						OR
+						(ri.main_address between 120 and 206
+						and ac.dong like '논현%동')
+					 </if>
+					 <if test="sector_name.toString() == 'nonhyeon5'">
+						OR
+						(ri.main_address between 207 and 237
+						and ac.dong like '논현%동')
+					 </if>
+					 <if test="sector_name.toString() == 'nonhyeon6'">
+						OR
+						(ri.main_address between 238 and 278
+						and ac.dong like '논현%동')
+					 </if>
+					 <if test="sector_name.toString() == 'samsung1'">
+						OR
+						(ri.main_address between 1 and 51
+						and ac.dong like '삼성%동')
+					 </if>
+					 <if test="sector_name.toString() == 'samsung2'">
+						OR
+						(ri.main_address between 52 and 77
+						and ac.dong like '삼성%동')
+					 </if>
+					 <if test="sector_name.toString() == 'samsung3'">
+						OR
+						(ri.main_address between 78 and 111
+						and ac.dong like '삼성%동')
+					 </if>
+					 <if test="sector_name.toString() == 'samsung4'">
+						OR
+						(ri.main_address between 112 and 144
+						and ac.dong like '삼성%동')
+					 </if>
+					 <if test="sector_name.toString() == 'samsung5'">
+						OR
+						(ri.main_address between 145 and 171
+						and ac.dong like '삼성%동')
+					 </if>
+					 <if test="sector_name.toString() == 'seocho1'">
+						OR
+						(ri.main_address between 1301 and 1318
+						and ac.dong like '서초%동')
+					 </if>
+					 <if test="sector_name.toString() == 'seocho2'">
+						OR
+						(ri.main_address between 1319 and 1339
+						and ac.dong like '서초%동')
+					 </if>
+					 <if test="sector_name.toString() == 'seocho3'">
+						OR
+						(ri.main_address between 1340 and 1366
+						and ac.dong like '서초%동')
+					 </if>
+					 <if test="sector_name.toString() == 'sinsa1'">
+						OR
+						(ri.main_address between 501 and 586
+						and ac.dong like '신사%동')
+					 </if>
+					 <if test="sector_name.toString() == 'apgujeong1'">
+						OR
+						(ri.main_address between 587 and 629
+						and ac.dong like '신사%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam1'">
+						OR
+						(ri.main_address between 601 and 649
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam1'">
+						OR
+						(ri.main_address between 808 and 822
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam2'">
+						OR
+						(ri.main_address between 650 and 679
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam3'">
+						OR
+						(ri.main_address between 680 and 705
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam4'">
+						OR
+						(ri.main_address between 706 and 716
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam5'">
+						OR
+						(ri.main_address between 717 and 734
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam5'">
+						OR
+						(ri.main_address between 769 and 788
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam6'">
+						OR
+						(ri.main_address between 735 and 753
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam6'">
+						OR
+						(ri.main_address between 789 and 799
+						and ac.dong like '역삼%동')
+					 </if>
+					 <if test="sector_name.toString() == 'yeoksam6'">
+						OR
+						(ri.main_address between 823 and 840
+						and ac.dong like '역삼%동')
+					 </if>
+		   		 )
+		   		 
+		    </if>
+		    	<if test="pMap.trade.toString() == 1 
+		    		or pMap.charter.toString() == 2
+		    		or pMap.monthly_and_charter.toString() == 6
+		    		or pMap.monthly.toString() == 4 
+		    		or pMap.short_lease.toString() == 8">
+				    AND 
+				    (
+						<if test="pMap.trade.toString() == 1">                (0 != 1<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.charter.toString() == 2">              (0 != 2<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.monthly_and_charter.toString() == 6">  ((0 != 2<![CDATA[ & ]]>type) and (0 != 4<![CDATA[ & ]]>type))  OR </if>
+						<if test="pMap.monthly.toString() == 4">              (0 != 4<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.short_lease.toString() ==8">           (0 != 8<![CDATA[ & ]]>type) OR </if>
+						FALSE
+					) 
+				</if>
+				
+				<if test="pMap.depositmax.toString() != 999999999">
+					AND 	deposit <![CDATA[ <= ]]> #{pMap.depositmax }
+				</if>
+				<if test="pMap.depositmin.toString() != 0">
+					AND 	#{pMap.depositmin} <![CDATA[ <= ]]> deposit
+				</if>
+				
+				<if test="pMap.monthmax.toString() != 999999999">
+					AND 	monthly_rent <![CDATA[ <= ]]> #{pMap.monthmax }
+				</if>
+				<if test="pMap.monthmin.toString() != 0">
+					AND 	#{pMap.monthmin} <![CDATA[ <= ]]> monthly_rent
+				</if>
+				
+				<if test="pMap.chartermax.toString() != 999999999">
+					AND 	charter_deposit <![CDATA[ <= ]]> #{pMap.chartermax }
+				</if>
+				<if test="pMap.chartermin.toString() != 0">
+					AND 	#{pMap.chartermin} <![CDATA[ <= ]]> charter_deposit
+				</if>
+				
+				<if test="pMap.standardmax.toString() != 999999999">
+					AND 	standard_deposit <![CDATA[ <= ]]> #{pMap.standardmax }
+				</if>
+				<if test="pMap.standardmin.toString() != 0">
+					AND 	#{pMap.standardmin} <![CDATA[ <= ]]> standard_deposit
+				</if>
+				
+		    	<if test="pMap.apartment.toString() == 1 
+		    		or pMap.officetel.toString() == 1
+		    		or pMap.house.toString() == 1
+		    		or pMap.normal_room.toString() == 1
+		    		or pMap.shop.toString() == 1
+		    		or pMap.office.toString() == 1
+		    		or pMap.building.toString() == 1
+		    		or pMap.redevelopment.toString() == 1
+		    		or pMap.event.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.apartment.toString() == 1">     apartment = 1        OR </if>
+						<if test="pMap.officetel.toString() == 1">     officetel = 1        OR </if>
+						<if test="pMap.house.toString() == 1">  	   house = 1            OR </if>
+						<if test="pMap.normal_room.toString() == 1">   normal_room = 1      OR </if>
+						<if test="pMap.shop.toString() == 1">  		   shop = 1             OR </if>
+						<if test="pMap.office.toString() == 1">  	   office = 1           OR </if>
+						<if test="pMap.building.toString() == 1">      building = 1         OR </if>
+						<if test="pMap.redevelopment.toString() == 1"> redevelopment = 1    OR </if>
+						<if test="pMap.event.toString() == 1">         event = 1            OR </if>
+						FALSE
+					) 
+				</if>
+				AND  built   between  0 AND   #{pMap.built}   
+				<if test="pMap.address.toString() != null and pMap.address.toString() != '' ">
+					AND  main_address = substring_index(#{pMap.address}, '-', 1) 
+						and  sub_address = substring_index(#{pMap.address}, '-', -1)
+ 				</if>
+ 				
+		    	<if test="pMap.open_room.toString() == 1 
+		    		or pMap.part_room.toString() == 1
+		    		or pMap.duplex_room.toString() == 1">
+				    and  
+				    (
+						<if test="pMap.open_room.toString() == 1">    room_type = 1 OR </if>
+						<if test="pMap.part_room.toString() == 1">    room_type = 2 OR </if>
+						<if test="pMap.duplex_room.toString() == 1">  room_type = 3 OR </if>
+						FALSE
+					) 
+				</if> 
+				
+		    	<if test="pMap.one_room.toString() == 1 
+		    		or pMap.two_room.toString() == 1
+		    		or pMap.three_room.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.one_room.toString() == 1">    room_count = 1  OR </if>
+						<if test="pMap.two_room.toString()  == 1">   room_count = 2  OR </if>
+						<if test="pMap.three_room.toString() == 1">  room_count = 3  OR </if>
+						FALSE
+					) 
+				</if>	
+				
+		    	<if test="pMap.up_ground.toString() == 1 
+		    		or pMap.under_ground.toString() == 1
+		    		or pMap.semi_basement.toString() == 1
+		    		or pMap.rooftop.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.semi_basement.toString() == 1"> semi_basement = 1 or  floor_no = 0	 OR </if>
+						<if test="pMap.rooftop.toString() == 1">       rooftop = 1                			 OR </if>
+						<if test="pMap.under_ground.toString() == 1">  floor_no  between -5 and -1 		 	 OR </if>
+						<if test="pMap.up_ground.toString() == 1">     floor_no  between  1 and 90 			 OR </if>
+						FALSE
+					) 
+				</if>	
+					
+			    <if test="pMap.exclusive_area_max.toString() != 999999999">
+					AND 	exclusive_area <![CDATA[ <= ]]> #{pMap.exclusive_area_max }
+				</if>
+				<if test="pMap.exclusive_area_min.toString() != 0">
+					AND 	#{pMap.exclusive_area_min} <![CDATA[ <= ]]> exclusive_area
+				</if>
+					
+				<if test="pMap.leased_area_max.toString() != 999999999">
+					AND 	leased_area <![CDATA[ <= ]]> #{pMap.leased_area_max }
+				</if>
+				<if test="pMap.leased_area_min.toString() != 0">
+					AND 	#{pMap.leased_area_min} <![CDATA[ <= ]]> leased_area
+				</if>
+			    
+		    	<if test="pMap.full_option_room.toString() == 1 or 
+			    	pMap.airconditioner.toString() == 1 or 
+			    	pMap.refrigerator.toString() == 1 or 
+			    	pMap.washer.toString() == 1 or 
+			    	pMap.tv.toString() == 1 or 
+			    	pMap.microwave.toString() == 1 or 
+			    	pMap.induction.toString() == 1 or 
+			    	pMap.sink.toString() == 1 or 
+			    	pMap.gasrange.toString() == 1 or 
+			    	pMap.sofa.toString() == 1 or 
+			    	pMap.bed.toString() == 1 or 
+			    	pMap.built_in_closet.toString() == 1 or 
+			    	pMap.dressing_table.toString() == 1 or 
+			    	pMap.veranda.toString() == 1 or 
+			    	pMap.shoe_closet.toString() == 1 or 
+			    	pMap.door_security.toString() == 1 or 
+			    	pMap.cctv.toString() == 1 or 
+			    	pMap.number_key.toString() == 1 ">
+				    AND  
+				    (
+				    <if test="pMap.full_option_room.toString() == 1">  
+				     	full_option_room = 1          			 AND </if>
+			    	<if test="pMap.airconditioner.toString() == 1"> 
+				     	airconditioner = 1            			 AND </if>
+			    	<if test="pMap.refrigerator.toString() == 1"> 
+				     	refrigerator = 1            			 AND </if>
+			    	<if test="pMap.washer.toString() == 1"> 
+				     	washer = 1                   			 AND </if>
+			    	<if test="pMap.tv.toString() == 1">  
+				     	tv = 1                       			 AND </if>
+			    	<if test="pMap.microwave.toString() == 1"> 
+				     	microwave = 1                			 AND </if>
+			    	<if test="pMap.induction.toString() == 1">  
+				     	induction = 1               			 AND </if>
+			    	<if test="pMap.sink.toString() == 1">
+			    		other_option Like '%싱크대%'   			 AND </if> 
+			    	<if test="pMap.gasrange.toString() == 1"> 
+				     	gasrange = 1                 			 AND </if>
+			    	<if test="pMap.sofa.toString() == 1"> 
+			    	(   other_option Like '%소파%'    or
+			    		other_option Like '%쇼파%'    or
+			    		other_option Like '%sofa%' 
+			    	)  			                                 AND </if>
+			    	<if test="pMap.bed.toString() == 1"> 
+				     	bed = 1                      			 AND </if>
+			    	<if test="pMap.built_in_closet.toString() == 1"> 
+				     	built_in_closet = 1           			 AND </if>
+			    	<if test="pMap.dressing_table.toString() == 1"> 
+				     	dressing_table = 1           			 AND </if>
+			    	<if test="pMap.veranda.toString() == 1">  
+				     	veranda = 1                   			 AND </if> 
+			    	<if test="pMap.shoe_closet.toString() == 1"> 
+			    		other_option Like '%신발%'     			 AND </if>
+			    	<if test="pMap.door_security.toString() == 1"> 
+				     	security = 1                 			 AND </if>
+			    	<if test="pMap.cctv.toString() == 1"> 
+			    		other_option Like '%cctv%'    			 AND </if>  
+			    	<if test="pMap.number_key.toString() == 1"> 
+				     	digital_doorlock = 1         			 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.elevator.toString() == 1 or 
+			    	pMap.parking.toString() == 1 or 
+			    	pMap.animal.toString() == 1 or 
+			    	pMap.empty.toString() == 1 " >
+				    AND  
+				    (
+				    <if test="pMap.elevator.toString() == 1">  
+				     	elevator = 1          				 AND </if>
+			    	<if test="pMap.parking.toString() == 1"> 
+				     	parking = 1            				 AND </if>
+			    	<if test="pMap.animal.toString() == 1"> 
+				     	animal = 1            				 AND </if>
+			    	<if test="pMap.empty.toString() == 1"> 
+				     	empty = 1                   		 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.pic_keep.toString() == 1 or 
+			    	pMap.pic_none.toString() == 1" >
+				    AND  
+				    (
+				    <if test="pMap.pic_keep.toString() == 1">  
+				     	photo  = 1       	   		 	 AND </if>
+			    	<if test="pMap.pic_none.toString() == 1"> 
+				     	photo = 0         	  	 	 	 AND </if>
+			    		TRUE
+					) 
+				</if>			
+		    	<if test="pMap.movie_keep.toString() == 1 or 
+			    	pMap.movie_none.toString() == 1 " >
+				    AND  
+				    (
+			    	<if test="pMap.movie_keep.toString() == 1"> 
+				     	movie_url  is not null     			  AND </if>
+			    	<if test="pMap.movie_none.toString() == 1"> 
+				     	movie_url  is null         			  AND </if>
+			    	    TRUE
+					) 
+				</if>	
+				<if test="pMap.sale.toString() == 1">
+				    AND  
+				    (
+			    		close = 0 
+					) 
+				</if>
+	</select>		
+			
+	<!--filter와 매물의 주소코드에 속하는 방의 정보들을  get -->
+	<select id="getSpecificRoomItemAboutFilterAddress" resultType="com.gnbang.webserver.object.SearchRoomSumary"
+		 parameterType="map" >
+			SELECT  *
+		       from room_item ri 
+		       , specific_room_item sri,  address_code ac 
+			    <![CDATA[	
+					 where ri.no = sri.item_no and ac.code = ri.local_code 
+					 and (
+						 REPLACE(ac.dong, '동', '') like concat(REPLACE((select dong from address_code where code = #{addressCode}), '동', ''),'_')
+						 or 
+						 REPLACE(ac.dong, '동', '') like concat(REPLACE((select dong from address_code where code = #{addressCode}), '동', ''),'')
+					 )
+			    ]]>
+		    	<if test="pMap.trade.toString() == 1 
+		    		or pMap.charter.toString() == 2
+		    		or pMap.monthly_and_charter.toString() == 6
+		    		or pMap.monthly.toString() == 4 
+		    		or pMap.short_lease.toString() == 8">
+				    AND 
+				    (
+						<if test="pMap.trade.toString() == 1">                (0 != 1<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.charter.toString() == 2">              (0 != 2<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.monthly_and_charter.toString() == 6">  ((0 != 2<![CDATA[ & ]]>type) and (0 != 4<![CDATA[ & ]]>type))  OR </if>
+						<if test="pMap.monthly.toString() == 4">              (0 != 4<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.short_lease.toString() ==8">           (0 != 8<![CDATA[ & ]]>type) OR </if>
+						FALSE
+					) 
+				</if>
+				
+				<if test="pMap.depositmax.toString() != 999999999">
+					AND 	deposit <![CDATA[ <= ]]> #{pMap.depositmax }
+				</if>
+				<if test="pMap.depositmin.toString() != 0">
+					AND 	#{pMap.depositmin} <![CDATA[ <= ]]> deposit
+				</if>
+				
+				<if test="pMap.monthmax.toString() != 999999999">
+					AND 	monthly_rent <![CDATA[ <= ]]> #{pMap.monthmax }
+				</if>
+				<if test="pMap.monthmin.toString() != 0">
+					AND 	#{pMap.monthmin} <![CDATA[ <= ]]> monthly_rent
+				</if>
+				
+				<if test="pMap.chartermax.toString() != 999999999">
+					AND 	charter_deposit <![CDATA[ <= ]]> #{pMap.chartermax }
+				</if>
+				<if test="pMap.chartermin.toString() != 0">
+					AND 	#{pMap.chartermin} <![CDATA[ <= ]]> charter_deposit
+				</if>
+				
+				<if test="pMap.standardmax.toString() != 999999999">
+					AND 	standard_deposit <![CDATA[ <= ]]> #{pMap.standardmax }
+				</if>
+				<if test="pMap.standardmin.toString() != 0">
+					AND 	#{pMap.standardmin} <![CDATA[ <= ]]> standard_deposit
+				</if>
+				
+		    	<if test="pMap.apartment.toString() == 1 
+		    		or pMap.officetel.toString() == 1
+		    		or pMap.house.toString() == 1
+		    		or pMap.normal_room.toString() == 1
+		    		or pMap.shop.toString() == 1
+		    		or pMap.office.toString() == 1
+		    		or pMap.building.toString() == 1
+		    		or pMap.redevelopment.toString() == 1
+		    		or pMap.event.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.apartment.toString() == 1">     apartment = 1        OR </if>
+						<if test="pMap.officetel.toString() == 1">     officetel = 1        OR </if>
+						<if test="pMap.house.toString() == 1">  	   house = 1            OR </if>
+						<if test="pMap.normal_room.toString() == 1">   normal_room = 1      OR </if>
+						<if test="pMap.shop.toString() == 1">  		   shop = 1             OR </if>
+						<if test="pMap.office.toString() == 1">  	   office = 1           OR </if>
+						<if test="pMap.building.toString() == 1">      building = 1         OR </if>
+						<if test="pMap.redevelopment.toString() == 1"> redevelopment = 1    OR </if>
+						<if test="pMap.event.toString() == 1">         event = 1            OR </if>
+						FALSE
+					) 
+				</if>
+				AND  built   between  0 AND   #{pMap.built}   
+				<if test="pMap.address.toString() != null and pMap.address.toString() != '' ">
+					AND  main_address = substring_index(#{pMap.address}, '-', 1) 
+						and  sub_address = substring_index(#{pMap.address}, '-', -1)
+ 				</if>
+ 				
+		    	<if test="pMap.open_room.toString() == 1 
+		    		or pMap.part_room.toString() == 1
+		    		or pMap.duplex_room.toString() == 1">
+				    and  
+				    (
+						<if test="pMap.open_room.toString() == 1">    room_type = 1 OR </if>
+						<if test="pMap.part_room.toString() == 1">    room_type = 2 OR </if>
+						<if test="pMap.duplex_room.toString() == 1">  room_type = 3 OR </if>
+						FALSE
+					) 
+				</if> 
+				
+		    	<if test="pMap.one_room.toString() == 1 
+		    		or pMap.two_room.toString() == 1
+		    		or pMap.three_room.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.one_room.toString() == 1">    room_count = 1  OR </if>
+						<if test="pMap.two_room.toString()  == 1">   room_count = 2  OR </if>
+						<if test="pMap.three_room.toString() == 1">  room_count = 3  OR </if>
+						FALSE
+					) 
+				</if>	
+				
+		    	<if test="pMap.up_ground.toString() == 1 
+		    		or pMap.under_ground.toString() == 1
+		    		or pMap.semi_basement.toString() == 1
+		    		or pMap.rooftop.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.semi_basement.toString() == 1"> semi_basement = 1 or  floor_no = 0	 OR </if>
+						<if test="pMap.rooftop.toString() == 1">       rooftop = 1                			 OR </if>
+						<if test="pMap.under_ground.toString() == 1">  floor_no  between -5 and -1 		 	 OR </if>
+						<if test="pMap.up_ground.toString() == 1">     floor_no  between  1 and 90 			 OR </if>
+						FALSE
+					) 
+				</if>	
+					
+			    <if test="pMap.exclusive_area_max.toString() != 999999999">
+					AND 	exclusive_area <![CDATA[ <= ]]> #{pMap.exclusive_area_max }
+				</if>
+				<if test="pMap.exclusive_area_min.toString() != 0">
+					AND 	#{pMap.exclusive_area_min} <![CDATA[ <= ]]> exclusive_area
+				</if>
+					
+				<if test="pMap.leased_area_max.toString() != 999999999">
+					AND 	leased_area <![CDATA[ <= ]]> #{pMap.leased_area_max }
+				</if>
+				<if test="pMap.leased_area_min.toString() != 0">
+					AND 	#{pMap.leased_area_min} <![CDATA[ <= ]]> leased_area
+				</if>
+			    
+		    	<if test="pMap.full_option_room.toString() == 1 or 
+			    	pMap.airconditioner.toString() == 1 or 
+			    	pMap.refrigerator.toString() == 1 or 
+			    	pMap.washer.toString() == 1 or 
+			    	pMap.tv.toString() == 1 or 
+			    	pMap.microwave.toString() == 1 or 
+			    	pMap.induction.toString() == 1 or 
+			    	pMap.sink.toString() == 1 or 
+			    	pMap.gasrange.toString() == 1 or 
+			    	pMap.sofa.toString() == 1 or 
+			    	pMap.bed.toString() == 1 or 
+			    	pMap.built_in_closet.toString() == 1 or 
+			    	pMap.dressing_table.toString() == 1 or 
+			    	pMap.veranda.toString() == 1 or 
+			    	pMap.shoe_closet.toString() == 1 or 
+			    	pMap.door_security.toString() == 1 or 
+			    	pMap.cctv.toString() == 1 or 
+			    	pMap.number_key.toString() == 1 ">
+				    AND  
+				    (
+				    <if test="pMap.full_option_room.toString() == 1">  
+				     	full_option_room = 1          			 AND </if>
+			    	<if test="pMap.airconditioner.toString() == 1"> 
+				     	airconditioner = 1            			 AND </if>
+			    	<if test="pMap.refrigerator.toString() == 1"> 
+				     	refrigerator = 1            			 AND </if>
+			    	<if test="pMap.washer.toString() == 1"> 
+				     	washer = 1                   			 AND </if>
+			    	<if test="pMap.tv.toString() == 1">  
+				     	tv = 1                       			 AND </if>
+			    	<if test="pMap.microwave.toString() == 1"> 
+				     	microwave = 1                			 AND </if>
+			    	<if test="pMap.induction.toString() == 1">  
+				     	induction = 1               			 AND </if>
+			    	<if test="pMap.sink.toString() == 1">
+			    		other_option Like '%싱크대%'   			 AND </if> 
+			    	<if test="pMap.gasrange.toString() == 1"> 
+				     	gasrange = 1                 			 AND </if>
+			    	<if test="pMap.sofa.toString() == 1"> 
+			    	(   other_option Like '%소파%'    or
+			    		other_option Like '%쇼파%'    or
+			    		other_option Like '%sofa%' 
+			    	)  			                                 AND </if>
+			    	<if test="pMap.bed.toString() == 1"> 
+				     	bed = 1                      			 AND </if>
+			    	<if test="pMap.built_in_closet.toString() == 1"> 
+				     	built_in_closet = 1           			 AND </if>
+			    	<if test="pMap.dressing_table.toString() == 1"> 
+				     	dressing_table = 1           			 AND </if>
+			    	<if test="pMap.veranda.toString() == 1">  
+				     	veranda = 1                   			 AND </if> 
+			    	<if test="pMap.shoe_closet.toString() == 1"> 
+			    		other_option Like '%신발%'     			 AND </if>
+			    	<if test="pMap.door_security.toString() == 1"> 
+				     	security = 1                 			 AND </if>
+			    	<if test="pMap.cctv.toString() == 1"> 
+			    		other_option Like '%cctv%'    			 AND </if>  
+			    	<if test="pMap.number_key.toString() == 1"> 
+				     	digital_doorlock = 1         			 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.elevator.toString() == 1 or 
+			    	pMap.parking.toString() == 1 or 
+			    	pMap.animal.toString() == 1 or 
+			    	pMap.empty.toString() == 1 " >
+				    AND  
+				    (
+				    <if test="pMap.elevator.toString() == 1">  
+				     	elevator = 1          				 AND </if>
+			    	<if test="pMap.parking.toString() == 1"> 
+				     	parking = 1            				 AND </if>
+			    	<if test="pMap.animal.toString() == 1"> 
+				     	animal = 1            				 AND </if>
+			    	<if test="pMap.empty.toString() == 1"> 
+				     	empty = 1                   		 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.pic_keep.toString() == 1 or 
+			    	pMap.pic_none.toString() == 1" >
+				    AND  
+				    (
+				    <if test="pMap.pic_keep.toString() == 1">  
+				     	photo  = 1       	   		 	 AND </if>
+			    	<if test="pMap.pic_none.toString() == 1"> 
+				     	photo = 0         	  	 	 	 AND </if>
+			    		TRUE
+					) 
+				</if>			
+		    	<if test="pMap.movie_keep.toString() == 1 or 
+			    	pMap.movie_none.toString() == 1 " >
+				    AND  
+				    (
+			    	<if test="pMap.movie_keep.toString() == 1"> 
+				     	movie_url  is not null     			  AND </if>
+			    	<if test="pMap.movie_none.toString() == 1"> 
+				     	movie_url  is null         			  AND </if>
+			    	    TRUE
+					) 
+				</if>	
+				<if test="pMap.sale.toString() == 1">
+				    AND  
+				    (
+			    		close = 0 
+					) 
+				</if>
+			order by ${sort}
+			limit #{pg}, #{roomNumPerPage};
+	</select>
+	
+	<!--filter와 매물의 주소코드에 속하는 방의 개수를  가져옴 -->
+	<select id="getCountRoomAboutAddress" resultType="Integer"
+		 parameterType="map" >
+			SELECT count(*)
+		       from room_item ri  
+		       , specific_room_item sri,  address_code ac 
+			    <![CDATA[	
+					 where ri.no = sri.item_no and ac.code = ri.local_code 
+					 and (
+						 REPLACE(ac.dong, '동', '') like concat(REPLACE((select dong from address_code where code = #{addressCode}), '동', ''),'_')
+						 or 
+						 REPLACE(ac.dong, '동', '') like concat(REPLACE((select dong from address_code where code = #{addressCode}), '동', ''),'')
+					 )
+			    ]]>
+		    	<if test="pMap.trade.toString() == 1 
+		    		or pMap.charter.toString() == 2
+		    		or pMap.monthly_and_charter.toString() == 6
+		    		or pMap.monthly.toString() == 4 
+		    		or pMap.short_lease.toString() == 8">
+				    AND 
+				    (
+						<if test="pMap.trade.toString() == 1">                (0 != 1<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.charter.toString() == 2">              (0 != 2<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.monthly_and_charter.toString() == 6">  ((0 != 2<![CDATA[ & ]]>type) and (0 != 4<![CDATA[ & ]]>type))  OR </if>
+						<if test="pMap.monthly.toString() == 4">              (0 != 4<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.short_lease.toString() ==8">           (0 != 8<![CDATA[ & ]]>type) OR </if>
+						FALSE
+					) 
+				</if>
+				
+			   <if test="pMap.depositmax.toString() != 999999999">
+					AND 	deposit <![CDATA[ <= ]]> #{pMap.depositmax }
+				</if>
+				<if test="pMap.depositmin.toString() != 0">
+					AND 	#{pMap.depositmin} <![CDATA[ <= ]]> deposit
+				</if>
+				
+				<if test="pMap.monthmax.toString() != 999999999">
+					AND 	monthly_rent <![CDATA[ <= ]]> #{pMap.monthmax }
+				</if>
+				<if test="pMap.monthmin.toString() != 0">
+					AND 	#{pMap.monthmin} <![CDATA[ <= ]]> monthly_rent
+				</if>
+				
+				<if test="pMap.chartermax.toString() != 999999999">
+					AND 	charter_deposit <![CDATA[ <= ]]> #{pMap.chartermax }
+				</if>
+				<if test="pMap.chartermin.toString() != 0">
+					AND 	#{pMap.chartermin} <![CDATA[ <= ]]> charter_deposit
+				</if>
+				
+				<if test="pMap.standardmax.toString() != 999999999">
+					AND 	standard_deposit <![CDATA[ <= ]]> #{pMap.standardmax }
+				</if>
+				<if test="pMap.standardmin.toString() != 0">
+					AND 	#{pMap.standardmin} <![CDATA[ <= ]]> standard_deposit
+				</if>
+				
+		    	<if test="pMap.apartment.toString() == 1 
+		    		or pMap.officetel.toString() == 1
+		    		or pMap.house.toString() == 1
+		    		or pMap.normal_room.toString() == 1
+		    		or pMap.shop.toString() == 1
+		    		or pMap.office.toString() == 1
+		    		or pMap.building.toString() == 1
+		    		or pMap.redevelopment.toString() == 1
+		    		or pMap.event.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.apartment.toString() == 1">     apartment = 1        OR </if>
+						<if test="pMap.officetel.toString() == 1">     officetel = 1        OR </if>
+						<if test="pMap.house.toString() == 1">  	   house = 1            OR </if>
+						<if test="pMap.normal_room.toString() == 1">   normal_room = 1      OR </if>
+						<if test="pMap.shop.toString() == 1">  		   shop = 1             OR </if>
+						<if test="pMap.office.toString() == 1">  	   office = 1           OR </if>
+						<if test="pMap.building.toString() == 1">      building = 1         OR </if>
+						<if test="pMap.redevelopment.toString() == 1"> redevelopment = 1    OR </if>
+						<if test="pMap.event.toString() == 1">         event = 1            OR </if>
+						FALSE
+					) 
+				</if>
+				AND  built   between  0 AND   #{pMap.built}   
+				<if test="pMap.address.toString() != null and pMap.address.toString() != '' ">
+					AND  main_address = substring_index(#{pMap.address}, '-', 1) 
+						and  sub_address = substring_index(#{pMap.address}, '-', -1)
+ 				</if>
+ 				
+		    	<if test="pMap.open_room.toString() == 1 
+		    		or pMap.part_room.toString() == 1
+		    		or pMap.duplex_room.toString() == 1">
+				    and  
+				    (
+						<if test="pMap.open_room.toString() == 1">    room_type = 1 OR </if>
+						<if test="pMap.part_room.toString() == 1">    room_type = 2 OR </if>
+						<if test="pMap.duplex_room.toString() == 1">  room_type = 3 OR </if>
+						FALSE
+					) 
+				</if> 
+				
+		    	<if test="pMap.one_room.toString() == 1 
+		    		or pMap.two_room.toString() == 1
+		    		or pMap.three_room.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.one_room.toString() == 1">    room_count = 1  OR </if>
+						<if test="pMap.two_room.toString()  == 1">   room_count = 2  OR </if>
+						<if test="pMap.three_room.toString() == 1">  room_count = 3  OR </if>
+						FALSE
+					) 
+				</if>	
+				
+		    	<if test="pMap.up_ground.toString() == 1 
+		    		or pMap.under_ground.toString() == 1
+		    		or pMap.semi_basement.toString() == 1
+		    		or pMap.rooftop.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.semi_basement.toString() == 1"> semi_basement = 1 or  floor_no = 0	 OR </if>
+						<if test="pMap.rooftop.toString() == 1">       rooftop = 1                			 OR </if>
+						<if test="pMap.under_ground.toString() == 1">  floor_no  between -5 and -1 		 	 OR </if>
+						<if test="pMap.up_ground.toString() == 1">     floor_no  between  1 and 90 			 OR </if>
+						FALSE
+					) 
+				</if>	
+					
+			    <if test="pMap.exclusive_area_max.toString() != 999999999">
+					AND 	exclusive_area <![CDATA[ <= ]]> #{pMap.exclusive_area_max }
+				</if>
+				<if test="pMap.exclusive_area_min.toString() != 0">
+					AND 	#{pMap.exclusive_area_min} <![CDATA[ <= ]]> exclusive_area
+				</if>
+					
+				<if test="pMap.leased_area_max.toString() != 999999999">
+					AND 	leased_area <![CDATA[ <= ]]> #{pMap.leased_area_max }
+				</if>
+				<if test="pMap.leased_area_min.toString() != 0">
+					AND 	#{pMap.leased_area_min} <![CDATA[ <= ]]> leased_area
+				</if>
+			    
+		    	<if test="pMap.full_option_room.toString() == 1 or 
+			    	pMap.airconditioner.toString() == 1 or 
+			    	pMap.refrigerator.toString() == 1 or 
+			    	pMap.washer.toString() == 1 or 
+			    	pMap.tv.toString() == 1 or 
+			    	pMap.microwave.toString() == 1 or 
+			    	pMap.induction.toString() == 1 or 
+			    	pMap.sink.toString() == 1 or 
+			    	pMap.gasrange.toString() == 1 or 
+			    	pMap.sofa.toString() == 1 or 
+			    	pMap.bed.toString() == 1 or 
+			    	pMap.built_in_closet.toString() == 1 or 
+			    	pMap.dressing_table.toString() == 1 or 
+			    	pMap.veranda.toString() == 1 or 
+			    	pMap.shoe_closet.toString() == 1 or 
+			    	pMap.door_security.toString() == 1 or 
+			    	pMap.cctv.toString() == 1 or 
+			    	pMap.number_key.toString() == 1 ">
+				    AND  
+				    (
+				    <if test="pMap.full_option_room.toString() == 1">  
+				     	full_option_room = 1          			 AND </if>
+			    	<if test="pMap.airconditioner.toString() == 1"> 
+				     	airconditioner = 1            			 AND </if>
+			    	<if test="pMap.refrigerator.toString() == 1"> 
+				     	refrigerator = 1            			 AND </if>
+			    	<if test="pMap.washer.toString() == 1"> 
+				     	washer = 1                   			 AND </if>
+			    	<if test="pMap.tv.toString() == 1">  
+				     	tv = 1                       			 AND </if>
+			    	<if test="pMap.microwave.toString() == 1"> 
+				     	microwave = 1                			 AND </if>
+			    	<if test="pMap.induction.toString() == 1">  
+				     	induction = 1               			 AND </if>
+			    	<if test="pMap.sink.toString() == 1">
+			    		other_option Like '%싱크대%'   			 AND </if> 
+			    	<if test="pMap.gasrange.toString() == 1"> 
+				     	gasrange = 1                 			 AND </if>
+			    	<if test="pMap.sofa.toString() == 1"> 
+			    	(   other_option Like '%소파%'    or
+			    		other_option Like '%쇼파%'    or
+			    		other_option Like '%sofa%' 
+			    	)  			                                 AND </if>
+			    	<if test="pMap.bed.toString() == 1"> 
+				     	bed = 1                      			 AND </if>
+			    	<if test="pMap.built_in_closet.toString() == 1"> 
+				     	built_in_closet = 1           			 AND </if>
+			    	<if test="pMap.dressing_table.toString() == 1"> 
+				     	dressing_table = 1           			 AND </if>
+			    	<if test="pMap.veranda.toString() == 1">  
+				     	veranda = 1                   			 AND </if> 
+			    	<if test="pMap.shoe_closet.toString() == 1"> 
+			    		other_option Like '%신발%'     			 AND </if>
+			    	<if test="pMap.door_security.toString() == 1"> 
+				     	security = 1                 			 AND </if>
+			    	<if test="pMap.cctv.toString() == 1"> 
+			    		other_option Like '%cctv%'    			 AND </if>  
+			    	<if test="pMap.number_key.toString() == 1"> 
+				     	digital_doorlock = 1         			 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.elevator.toString() == 1 or 
+			    	pMap.parking.toString() == 1 or 
+			    	pMap.animal.toString() == 1 or 
+			    	pMap.empty.toString() == 1 " >
+				    AND  
+				    (
+				    <if test="pMap.elevator.toString() == 1">  
+				     	elevator = 1          				 AND </if>
+			    	<if test="pMap.parking.toString() == 1"> 
+				     	parking = 1            				 AND </if>
+			    	<if test="pMap.animal.toString() == 1"> 
+				     	animal = 1            				 AND </if>
+			    	<if test="pMap.empty.toString() == 1"> 
+				     	empty = 1                   		 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.pic_keep.toString() == 1 or 
+			    	pMap.pic_none.toString() == 1" >
+				    AND  
+				    (
+				    <if test="pMap.pic_keep.toString() == 1">  
+				     	photo  = 1       	   		 	 AND </if>
+			    	<if test="pMap.pic_none.toString() == 1"> 
+				     	photo = 0         	  	 	 	 AND </if>
+			    		TRUE
+					) 
+				</if>			
+		    	<if test="pMap.movie_keep.toString() == 1 or 
+			    	pMap.movie_none.toString() == 1 " >
+				    AND  
+				    (
+			    	<if test="pMap.movie_keep.toString() == 1"> 
+				     	movie_url  is not null     			  AND </if>
+			    	<if test="pMap.movie_none.toString() == 1"> 
+				     	movie_url  is null         			  AND </if>
+			    	    TRUE
+					) 
+				</if>	
+				<if test="pMap.sale.toString() == 1">
+				    AND  
+				    (
+			    		close = 0 
+					) 
+				</if>
+	</select>
+	
+	<!--filter와 번지수에 속하는 방의 정보들을  get -->
+	<select id="getSpecificRoomItemAboutFilterBunji" resultType="com.gnbang.webserver.object.SearchRoomSumary"
+		 parameterType="map" >
+				SELECT  *
+			       from room_item ri 
+			       , specific_room_item sri,  address_code ac 
+			    <![CDATA[	
+					where ri.no = sri.item_no and ac.code = ri.local_code 
+					and `main_address` like #{main_address} 
+					and `sub_address` like #{sub_address}
+			    ]]>
+		    	<if test="pMap.trade.toString() == 1 
+		    		or pMap.charter.toString() == 2
+		    		or pMap.monthly_and_charter.toString() == 6
+		    		or pMap.monthly.toString() == 4 
+		    		or pMap.short_lease.toString() == 8">
+				    AND 
+				    (
+						<if test="pMap.trade.toString() == 1">                (0 != 1<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.charter.toString() == 2">              (0 != 2<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.monthly_and_charter.toString() == 6">  ((0 != 2<![CDATA[ & ]]>type) and (0 != 4<![CDATA[ & ]]>type))  OR </if>
+						<if test="pMap.monthly.toString() == 4">              (0 != 4<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.short_lease.toString() ==8">           (0 != 8<![CDATA[ & ]]>type) OR </if>
+						FALSE
+					) 
+				</if>
+				
+				<if test="pMap.depositmax.toString() != 999999999">
+					AND 	deposit <![CDATA[ <= ]]> #{pMap.depositmax }
+				</if>
+				<if test="pMap.depositmin.toString() != 0">
+					AND 	#{pMap.depositmin} <![CDATA[ <= ]]> deposit
+				</if>
+				
+				<if test="pMap.monthmax.toString() != 999999999">
+					AND 	monthly_rent <![CDATA[ <= ]]> #{pMap.monthmax }
+				</if>
+				<if test="pMap.monthmin.toString() != 0">
+					AND 	#{pMap.monthmin} <![CDATA[ <= ]]> monthly_rent
+				</if>
+				
+				<if test="pMap.chartermax.toString() != 999999999">
+					AND 	charter_deposit <![CDATA[ <= ]]> #{pMap.chartermax }
+				</if>
+				<if test="pMap.chartermin.toString() != 0">
+					AND 	#{pMap.chartermin} <![CDATA[ <= ]]> charter_deposit
+				</if>
+				
+				<if test="pMap.standardmax.toString() != 999999999">
+					AND 	standard_deposit <![CDATA[ <= ]]> #{pMap.standardmax }
+				</if>
+				<if test="pMap.standardmin.toString() != 0">
+					AND 	#{pMap.standardmin} <![CDATA[ <= ]]> standard_deposit
+				</if>
+				
+		    	<if test="pMap.apartment.toString() == 1 
+		    		or pMap.officetel.toString() == 1
+		    		or pMap.house.toString() == 1
+		    		or pMap.normal_room.toString() == 1
+		    		or pMap.shop.toString() == 1
+		    		or pMap.office.toString() == 1
+		    		or pMap.building.toString() == 1
+		    		or pMap.redevelopment.toString() == 1
+		    		or pMap.event.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.apartment.toString() == 1">     apartment = 1        OR </if>
+						<if test="pMap.officetel.toString() == 1">     officetel = 1        OR </if>
+						<if test="pMap.house.toString() == 1">  	   house = 1            OR </if>
+						<if test="pMap.normal_room.toString() == 1">   normal_room = 1      OR </if>
+						<if test="pMap.shop.toString() == 1">  		   shop = 1             OR </if>
+						<if test="pMap.office.toString() == 1">  	   office = 1           OR </if>
+						<if test="pMap.building.toString() == 1">      building = 1         OR </if>
+						<if test="pMap.redevelopment.toString() == 1"> redevelopment = 1    OR </if>
+						<if test="pMap.event.toString() == 1">         event = 1            OR </if>
+						FALSE
+					) 
+				</if>
+				AND  built   between  0 AND   #{pMap.built}   
+				<if test="pMap.address.toString() != null and pMap.address.toString() != '' ">
+					AND  main_address = substring_index(#{pMap.address}, '-', 1) 
+						and  sub_address = substring_index(#{pMap.address}, '-', -1)
+ 				</if>
+ 				
+		    	<if test="pMap.open_room.toString() == 1 
+		    		or pMap.part_room.toString() == 1
+		    		or pMap.duplex_room.toString() == 1">
+				    and  
+				    (
+						<if test="pMap.open_room.toString() == 1">    room_type = 1 OR </if>
+						<if test="pMap.part_room.toString() == 1">    room_type = 2 OR </if>
+						<if test="pMap.duplex_room.toString() == 1">  room_type = 3 OR </if>
+						FALSE
+					) 
+				</if> 
+				
+		    	<if test="pMap.one_room.toString() == 1 
+		    		or pMap.two_room.toString() == 1
+		    		or pMap.three_room.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.one_room.toString() == 1">    room_count = 1  OR </if>
+						<if test="pMap.two_room.toString()  == 1">   room_count = 2  OR </if>
+						<if test="pMap.three_room.toString() == 1">  room_count = 3  OR </if>
+						FALSE
+					) 
+				</if>	
+				
+		    	<if test="pMap.up_ground.toString() == 1 
+		    		or pMap.under_ground.toString() == 1
+		    		or pMap.semi_basement.toString() == 1
+		    		or pMap.rooftop.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.semi_basement.toString() == 1"> semi_basement = 1 or  floor_no = 0	 OR </if>
+						<if test="pMap.rooftop.toString() == 1">       rooftop = 1                			 OR </if>
+						<if test="pMap.under_ground.toString() == 1">  floor_no  between -5 and -1 		 	 OR </if>
+						<if test="pMap.up_ground.toString() == 1">     floor_no  between  1 and 90 			 OR </if>
+						FALSE
+					) 
+				</if>	
+					
+			    <if test="pMap.exclusive_area_max.toString() != 999999999">
+					AND 	exclusive_area <![CDATA[ <= ]]> #{pMap.exclusive_area_max }
+				</if>
+				<if test="pMap.exclusive_area_min.toString() != 0">
+					AND 	#{pMap.exclusive_area_min} <![CDATA[ <= ]]> exclusive_area
+				</if>
+					
+				<if test="pMap.leased_area_max.toString() != 999999999">
+					AND 	leased_area <![CDATA[ <= ]]> #{pMap.leased_area_max }
+				</if>
+				<if test="pMap.leased_area_min.toString() != 0">
+					AND 	#{pMap.leased_area_min} <![CDATA[ <= ]]> leased_area
+				</if>
+			    
+		    	<if test="pMap.full_option_room.toString() == 1 or 
+			    	pMap.airconditioner.toString() == 1 or 
+			    	pMap.refrigerator.toString() == 1 or 
+			    	pMap.washer.toString() == 1 or 
+			    	pMap.tv.toString() == 1 or 
+			    	pMap.microwave.toString() == 1 or 
+			    	pMap.induction.toString() == 1 or 
+			    	pMap.sink.toString() == 1 or 
+			    	pMap.gasrange.toString() == 1 or 
+			    	pMap.sofa.toString() == 1 or 
+			    	pMap.bed.toString() == 1 or 
+			    	pMap.built_in_closet.toString() == 1 or 
+			    	pMap.dressing_table.toString() == 1 or 
+			    	pMap.veranda.toString() == 1 or 
+			    	pMap.shoe_closet.toString() == 1 or 
+			    	pMap.door_security.toString() == 1 or 
+			    	pMap.cctv.toString() == 1 or 
+			    	pMap.number_key.toString() == 1 ">
+				    AND  
+				    (
+				    <if test="pMap.full_option_room.toString() == 1">  
+				     	full_option_room = 1          			 AND </if>
+			    	<if test="pMap.airconditioner.toString() == 1"> 
+				     	airconditioner = 1            			 AND </if>
+			    	<if test="pMap.refrigerator.toString() == 1"> 
+				     	refrigerator = 1            			 AND </if>
+			    	<if test="pMap.washer.toString() == 1"> 
+				     	washer = 1                   			 AND </if>
+			    	<if test="pMap.tv.toString() == 1">  
+				     	tv = 1                       			 AND </if>
+			    	<if test="pMap.microwave.toString() == 1"> 
+				     	microwave = 1                			 AND </if>
+			    	<if test="pMap.induction.toString() == 1">  
+				     	induction = 1               			 AND </if>
+			    	<if test="pMap.sink.toString() == 1">
+			    		other_option Like '%싱크대%'   			 AND </if> 
+			    	<if test="pMap.gasrange.toString() == 1"> 
+				     	gasrange = 1                 			 AND </if>
+			    	<if test="pMap.sofa.toString() == 1"> 
+			    	(   other_option Like '%소파%'    or
+			    		other_option Like '%쇼파%'    or
+			    		other_option Like '%sofa%' 
+			    	)  			                                 AND </if>
+			    	<if test="pMap.bed.toString() == 1"> 
+				     	bed = 1                      			 AND </if>
+			    	<if test="pMap.built_in_closet.toString() == 1"> 
+				     	built_in_closet = 1           			 AND </if>
+			    	<if test="pMap.dressing_table.toString() == 1"> 
+				     	dressing_table = 1           			 AND </if>
+			    	<if test="pMap.veranda.toString() == 1">  
+				     	veranda = 1                   			 AND </if> 
+			    	<if test="pMap.shoe_closet.toString() == 1"> 
+			    		other_option Like '%신발%'     			 AND </if>
+			    	<if test="pMap.door_security.toString() == 1"> 
+				     	security = 1                 			 AND </if>
+			    	<if test="pMap.cctv.toString() == 1"> 
+			    		other_option Like '%cctv%'    			 AND </if>  
+			    	<if test="pMap.number_key.toString() == 1"> 
+				     	digital_doorlock = 1         			 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.elevator.toString() == 1 or 
+			    	pMap.parking.toString() == 1 or 
+			    	pMap.animal.toString() == 1 or 
+			    	pMap.empty.toString() == 1 " >
+				    AND  
+				    (
+				    <if test="pMap.elevator.toString() == 1">  
+				     	elevator = 1          				 AND </if>
+			    	<if test="pMap.parking.toString() == 1"> 
+				     	parking = 1            				 AND </if>
+			    	<if test="pMap.animal.toString() == 1"> 
+				     	animal = 1            				 AND </if>
+			    	<if test="pMap.empty.toString() == 1"> 
+				     	empty = 1                   		 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.pic_keep.toString() == 1 or 
+			    	pMap.pic_none.toString() == 1" >
+				    AND  
+				    (
+				    <if test="pMap.pic_keep.toString() == 1">  
+				     	photo  = 1       	   		 	 AND </if>
+			    	<if test="pMap.pic_none.toString() == 1"> 
+				     	photo = 0         	  	 	 	 AND </if>
+			    		TRUE
+					) 
+				</if>			
+		    	<if test="pMap.movie_keep.toString() == 1 or 
+			    	pMap.movie_none.toString() == 1 " >
+				    AND  
+				    (
+			    	<if test="pMap.movie_keep.toString() == 1"> 
+				     	movie_url  is not null     			  AND </if>
+			    	<if test="pMap.movie_none.toString() == 1"> 
+				     	movie_url  is null         			  AND </if>
+			    	    TRUE
+					) 
+				</if>
+				<if test="pMap.sale.toString() == 1">
+				    AND  
+				    (
+			    		close = 0 
+					) 
+				</if>
+			order by ${sort}
+			limit #{pg}, #{roomNumPerPage};
+	</select>
+	
+	<!--filter와 번지수에 속하는 방의 정보들의 개수  -->
+	<select id="getCountRoomAboutBunji" resultType="Integer"
+		 parameterType="map" >
+			SELECT  count(*)
+		       from room_item ri 
+		       , specific_room_item sri,  address_code ac 
+		    <![CDATA[	
+				where ri.no = sri.item_no and ac.code = ri.local_code 
+				and `main_address` like #{main_address} 
+				and `sub_address` like #{sub_address}
+		    ]]>
+		    	<if test="pMap.trade.toString() == 1 
+		    		or pMap.charter.toString() == 2
+		    		or pMap.monthly_and_charter.toString() == 6
+		    		or pMap.monthly.toString() == 4 
+		    		or pMap.short_lease.toString() == 8">
+				    AND 
+				    (
+						<if test="pMap.trade.toString() == 1">                (0 != 1<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.charter.toString() == 2">              (0 != 2<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.monthly_and_charter.toString() == 6">  ((0 != 2<![CDATA[ & ]]>type) and (0 != 4<![CDATA[ & ]]>type))  OR </if>
+						<if test="pMap.monthly.toString() == 4">              (0 != 4<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.short_lease.toString() ==8">           (0 != 8<![CDATA[ & ]]>type) OR </if>
+						FALSE
+					) 
+				</if>
+				
+				<if test="pMap.depositmax.toString() != 999999999">
+					AND 	deposit <![CDATA[ <= ]]> #{pMap.depositmax }
+				</if>
+				<if test="pMap.depositmin.toString() != 0">
+					AND 	#{pMap.depositmin} <![CDATA[ <= ]]> deposit
+				</if>
+				
+				<if test="pMap.monthmax.toString() != 999999999">
+					AND 	monthly_rent <![CDATA[ <= ]]> #{pMap.monthmax }
+				</if>
+				<if test="pMap.monthmin.toString() != 0">
+					AND 	#{pMap.monthmin} <![CDATA[ <= ]]> monthly_rent
+				</if>
+				
+				<if test="pMap.chartermax.toString() != 999999999">
+					AND 	charter_deposit <![CDATA[ <= ]]> #{pMap.chartermax }
+				</if>
+				<if test="pMap.chartermin.toString() != 0">
+					AND 	#{pMap.chartermin} <![CDATA[ <= ]]> charter_deposit
+				</if>
+				
+				<if test="pMap.standardmax.toString() != 999999999">
+					AND 	standard_deposit <![CDATA[ <= ]]> #{pMap.standardmax }
+				</if>
+				<if test="pMap.standardmin.toString() != 0">
+					AND 	#{pMap.standardmin} <![CDATA[ <= ]]> standard_deposit
+				</if>
+				
+		    	<if test="pMap.apartment.toString() == 1 
+		    		or pMap.officetel.toString() == 1
+		    		or pMap.house.toString() == 1
+		    		or pMap.normal_room.toString() == 1
+		    		or pMap.shop.toString() == 1
+		    		or pMap.office.toString() == 1
+		    		or pMap.building.toString() == 1
+		    		or pMap.redevelopment.toString() == 1
+		    		or pMap.event.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.apartment.toString() == 1">     apartment = 1        OR </if>
+						<if test="pMap.officetel.toString() == 1">     officetel = 1        OR </if>
+						<if test="pMap.house.toString() == 1">  	   house = 1            OR </if>
+						<if test="pMap.normal_room.toString() == 1">   normal_room = 1      OR </if>
+						<if test="pMap.shop.toString() == 1">  		   shop = 1             OR </if>
+						<if test="pMap.office.toString() == 1">  	   office = 1           OR </if>
+						<if test="pMap.building.toString() == 1">      building = 1         OR </if>
+						<if test="pMap.redevelopment.toString() == 1"> redevelopment = 1    OR </if>
+						<if test="pMap.event.toString() == 1">         event = 1            OR </if>
+						FALSE
+					) 
+				</if>
+				AND  built   between  0 AND   #{pMap.built}   
+				<if test="pMap.address.toString() != null and pMap.address.toString() != '' ">
+					AND  main_address = substring_index(#{pMap.address}, '-', 1) 
+						and  sub_address = substring_index(#{pMap.address}, '-', -1)
+ 				</if>
+ 				
+		    	<if test="pMap.open_room.toString() == 1 
+		    		or pMap.part_room.toString() == 1
+		    		or pMap.duplex_room.toString() == 1">
+				    and  
+				    (
+						<if test="pMap.open_room.toString() == 1">    room_type = 1 OR </if>
+						<if test="pMap.part_room.toString() == 1">    room_type = 2 OR </if>
+						<if test="pMap.duplex_room.toString() == 1">  room_type = 3 OR </if>
+						FALSE
+					) 
+				</if> 
+				
+		    	<if test="pMap.one_room.toString() == 1 
+		    		or pMap.two_room.toString() == 1
+		    		or pMap.three_room.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.one_room.toString() == 1">    room_count = 1  OR </if>
+						<if test="pMap.two_room.toString()  == 1">   room_count = 2  OR </if>
+						<if test="pMap.three_room.toString() == 1">  room_count = 3  OR </if>
+						FALSE
+					) 
+				</if>	
+				
+		    	<if test="pMap.up_ground.toString() == 1 
+		    		or pMap.under_ground.toString() == 1
+		    		or pMap.semi_basement.toString() == 1
+		    		or pMap.rooftop.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.semi_basement.toString() == 1"> semi_basement = 1 or  floor_no = 0	 OR </if>
+						<if test="pMap.rooftop.toString() == 1">       rooftop = 1                			 OR </if>
+						<if test="pMap.under_ground.toString() == 1">  floor_no  between -5 and -1 		 	 OR </if>
+						<if test="pMap.up_ground.toString() == 1">     floor_no  between  1 and 90 			 OR </if>
+						FALSE
+					) 
+				</if>	
+					
+			    <if test="pMap.exclusive_area_max.toString() != 999999999">
+					AND 	exclusive_area <![CDATA[ <= ]]> #{pMap.exclusive_area_max }
+				</if>
+				<if test="pMap.exclusive_area_min.toString() != 0">
+					AND 	#{pMap.exclusive_area_min} <![CDATA[ <= ]]> exclusive_area
+				</if>
+					
+				<if test="pMap.leased_area_max.toString() != 999999999">
+					AND 	leased_area <![CDATA[ <= ]]> #{pMap.leased_area_max }
+				</if>
+				<if test="pMap.leased_area_min.toString() != 0">
+					AND 	#{pMap.leased_area_min} <![CDATA[ <= ]]> leased_area
+				</if>
+			    
+		    	<if test="pMap.full_option_room.toString() == 1 or 
+			    	pMap.airconditioner.toString() == 1 or 
+			    	pMap.refrigerator.toString() == 1 or 
+			    	pMap.washer.toString() == 1 or 
+			    	pMap.tv.toString() == 1 or 
+			    	pMap.microwave.toString() == 1 or 
+			    	pMap.induction.toString() == 1 or 
+			    	pMap.sink.toString() == 1 or 
+			    	pMap.gasrange.toString() == 1 or 
+			    	pMap.sofa.toString() == 1 or 
+			    	pMap.bed.toString() == 1 or 
+			    	pMap.built_in_closet.toString() == 1 or 
+			    	pMap.dressing_table.toString() == 1 or 
+			    	pMap.veranda.toString() == 1 or 
+			    	pMap.shoe_closet.toString() == 1 or 
+			    	pMap.door_security.toString() == 1 or 
+			    	pMap.cctv.toString() == 1 or 
+			    	pMap.number_key.toString() == 1 ">
+				    AND  
+				    (
+				    <if test="pMap.full_option_room.toString() == 1">  
+				     	full_option_room = 1          			 AND </if>
+			    	<if test="pMap.airconditioner.toString() == 1"> 
+				     	airconditioner = 1            			 AND </if>
+			    	<if test="pMap.refrigerator.toString() == 1"> 
+				     	refrigerator = 1            			 AND </if>
+			    	<if test="pMap.washer.toString() == 1"> 
+				     	washer = 1                   			 AND </if>
+			    	<if test="pMap.tv.toString() == 1">  
+				     	tv = 1                       			 AND </if>
+			    	<if test="pMap.microwave.toString() == 1"> 
+				     	microwave = 1                			 AND </if>
+			    	<if test="pMap.induction.toString() == 1">  
+				     	induction = 1               			 AND </if>
+			    	<if test="pMap.sink.toString() == 1">
+			    		other_option Like '%싱크대%'   			 AND </if> 
+			    	<if test="pMap.gasrange.toString() == 1"> 
+				     	gasrange = 1                 			 AND </if>
+			    	<if test="pMap.sofa.toString() == 1"> 
+			    	(   other_option Like '%소파%'    or
+			    		other_option Like '%쇼파%'    or
+			    		other_option Like '%sofa%' 
+			    	)  			                                 AND </if>
+			    	<if test="pMap.bed.toString() == 1"> 
+				     	bed = 1                      			 AND </if>
+			    	<if test="pMap.built_in_closet.toString() == 1"> 
+				     	built_in_closet = 1           			 AND </if>
+			    	<if test="pMap.dressing_table.toString() == 1"> 
+				     	dressing_table = 1           			 AND </if>
+			    	<if test="pMap.veranda.toString() == 1">  
+				     	veranda = 1                   			 AND </if> 
+			    	<if test="pMap.shoe_closet.toString() == 1"> 
+			    		other_option Like '%신발%'     			 AND </if>
+			    	<if test="pMap.door_security.toString() == 1"> 
+				     	security = 1                 			 AND </if>
+			    	<if test="pMap.cctv.toString() == 1"> 
+			    		other_option Like '%cctv%'    			 AND </if>  
+			    	<if test="pMap.number_key.toString() == 1"> 
+				     	digital_doorlock = 1         			 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.elevator.toString() == 1 or 
+			    	pMap.parking.toString() == 1 or 
+			    	pMap.animal.toString() == 1 or 
+			    	pMap.empty.toString() == 1 " >
+				    AND  
+				    (
+				    <if test="pMap.elevator.toString() == 1">  
+				     	elevator = 1          				 AND </if>
+			    	<if test="pMap.parking.toString() == 1"> 
+				     	parking = 1            				 AND </if>
+			    	<if test="pMap.animal.toString() == 1"> 
+				     	animal = 1            				 AND </if>
+			    	<if test="pMap.empty.toString() == 1"> 
+				     	empty = 1                   		 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.pic_keep.toString() == 1 or 
+			    	pMap.pic_none.toString() == 1" >
+				    AND  
+				    (
+				    <if test="pMap.pic_keep.toString() == 1">  
+				     	photo  = 1       	   		 	 AND </if>
+			    	<if test="pMap.pic_none.toString() == 1"> 
+				     	photo = 0         	  	 	 	 AND </if>
+			    		TRUE
+					) 
+				</if>			
+		    	<if test="pMap.movie_keep.toString() == 1 or 
+			    	pMap.movie_none.toString() == 1 " >
+				    AND  
+				    (
+			    	<if test="pMap.movie_keep.toString() == 1"> 
+				     	movie_url  is not null     			  AND </if>
+			    	<if test="pMap.movie_none.toString() == 1"> 
+				     	movie_url  is null         			  AND </if>
+			    	    TRUE
+					) 
+				</if>	
+				<if test="pMap.sale.toString() == 1">
+				    AND  
+				    (
+			    		close = 0 
+					) 
+				</if>
+	</select>
+	
+	<!--filter와 지하철코드에 속하는 방의 정보들을  get -->
+	<select id="getSpecificRoomItemAboutFilterMetroNo" resultType="com.gnbang.webserver.object.SearchRoomSumary"
+		 parameterType="map" >
+			SELECT         *
+		        from room_item ri 
+		        ,   specific_room_item sri, metro m , address_code ac
+		    <![CDATA[	
+		    	where ri.no = sri.item_no and(m.no = ri.metro1 or m.no = ri.metro2 or
+			m.no = ri.metro3 or m.no = ri.metro4 or m.no = ri.metro5) and m.no = #{metroNo} and ac.code = ri.local_code
+		    ]]>
+		    	<if test="pMap.trade.toString() == 1 
+		    		or pMap.charter.toString() == 2
+		    		or pMap.monthly_and_charter.toString() == 6
+		    		or pMap.monthly.toString() == 4 
+		    		or pMap.short_lease.toString() == 8">
+				    AND 
+				    (
+						<if test="pMap.trade.toString() == 1">                (0 != 1<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.charter.toString() == 2">              (0 != 2<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.monthly_and_charter.toString() == 6">  ((0 != 2<![CDATA[ & ]]>type) and (0 != 4<![CDATA[ & ]]>type))  OR </if>
+						<if test="pMap.monthly.toString() == 4">              (0 != 4<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.short_lease.toString() ==8">           (0 != 8<![CDATA[ & ]]>type) OR </if>
+						FALSE
+					) 
+				</if>
+				
+			    <if test="pMap.depositmax.toString() != 999999999">
+					AND 	deposit <![CDATA[ <= ]]> #{pMap.depositmax }
+				</if>
+				<if test="pMap.depositmin.toString() != 0">
+					AND 	#{pMap.depositmin} <![CDATA[ <= ]]> deposit
+				</if>
+				
+				<if test="pMap.monthmax.toString() != 999999999">
+					AND 	monthly_rent <![CDATA[ <= ]]> #{pMap.monthmax }
+				</if>
+				<if test="pMap.monthmin.toString() != 0">
+					AND 	#{pMap.monthmin} <![CDATA[ <= ]]> monthly_rent
+				</if>
+				
+				<if test="pMap.chartermax.toString() != 999999999">
+					AND 	charter_deposit <![CDATA[ <= ]]> #{pMap.chartermax }
+				</if>
+				<if test="pMap.chartermin.toString() != 0">
+					AND 	#{pMap.chartermin} <![CDATA[ <= ]]> charter_deposit
+				</if>
+				
+				<if test="pMap.standardmax.toString() != 999999999">
+					AND 	standard_deposit <![CDATA[ <= ]]> #{pMap.standardmax }
+				</if>
+				<if test="pMap.standardmin.toString() != 0">
+					AND 	#{pMap.standardmin} <![CDATA[ <= ]]> standard_deposit
+				</if>
+				
+		    	<if test="pMap.apartment.toString() == 1 
+		    		or pMap.officetel.toString() == 1
+		    		or pMap.house.toString() == 1
+		    		or pMap.normal_room.toString() == 1
+		    		or pMap.shop.toString() == 1
+		    		or pMap.office.toString() == 1
+		    		or pMap.building.toString() == 1
+		    		or pMap.redevelopment.toString() == 1
+		    		or pMap.event.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.apartment.toString() == 1">     apartment = 1        OR </if>
+						<if test="pMap.officetel.toString() == 1">     officetel = 1        OR </if>
+						<if test="pMap.house.toString() == 1">  	   house = 1            OR </if>
+						<if test="pMap.normal_room.toString() == 1">   normal_room = 1      OR </if>
+						<if test="pMap.shop.toString() == 1">  		   shop = 1             OR </if>
+						<if test="pMap.office.toString() == 1">  	   office = 1           OR </if>
+						<if test="pMap.building.toString() == 1">      building = 1         OR </if>
+						<if test="pMap.redevelopment.toString() == 1"> redevelopment = 1    OR </if>
+						<if test="pMap.event.toString() == 1">         event = 1            OR </if>
+						FALSE
+					) 
+				</if>
+				AND  built   between  0 AND   #{pMap.built}   
+				<if test="pMap.address.toString() != null and pMap.address.toString() != '' ">
+					AND  main_address = substring_index(#{pMap.address}, '-', 1) 
+						and  sub_address = substring_index(#{pMap.address}, '-', -1)
+ 				</if>
+ 				
+		    	<if test="pMap.open_room.toString() == 1 
+		    		or pMap.part_room.toString() == 1
+		    		or pMap.duplex_room.toString() == 1">
+				    and  
+				    (
+						<if test="pMap.open_room.toString() == 1">    room_type = 1 OR </if>
+						<if test="pMap.part_room.toString() == 1">    room_type = 2 OR </if>
+						<if test="pMap.duplex_room.toString() == 1">  room_type = 3 OR </if>
+						FALSE
+					) 
+				</if> 
+				
+		    	<if test="pMap.one_room.toString() == 1 
+		    		or pMap.two_room.toString() == 1
+		    		or pMap.three_room.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.one_room.toString() == 1">    room_count = 1  OR </if>
+						<if test="pMap.two_room.toString()  == 1">   room_count = 2  OR </if>
+						<if test="pMap.three_room.toString() == 1">  room_count = 3  OR </if>
+						FALSE
+					) 
+				</if>	
+				
+		    	<if test="pMap.up_ground.toString() == 1 
+		    		or pMap.under_ground.toString() == 1
+		    		or pMap.semi_basement.toString() == 1
+		    		or pMap.rooftop.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.semi_basement.toString() == 1"> semi_basement = 1 or  floor_no = 0	 OR </if>
+						<if test="pMap.rooftop.toString() == 1">       rooftop = 1                			 OR </if>
+						<if test="pMap.under_ground.toString() == 1">  floor_no  between -5 and -1 		 	 OR </if>
+						<if test="pMap.up_ground.toString() == 1">     floor_no  between  1 and 90 			 OR </if>
+						FALSE
+					) 
+				</if>	
+				 
+				<if test="pMap.exclusive_area_max.toString() != 999999999">
+					AND 	exclusive_area <![CDATA[ <= ]]> #{pMap.exclusive_area_max }
+				</if>
+				<if test="pMap.exclusive_area_min.toString() != 0">
+					AND 	#{pMap.exclusive_area_min} <![CDATA[ <= ]]> exclusive_area
+				</if>
+					
+				<if test="pMap.leased_area_max.toString() != 999999999">
+					AND 	leased_area <![CDATA[ <= ]]> #{pMap.leased_area_max }
+				</if>
+				<if test="pMap.leased_area_min.toString() != 0">
+					AND 	#{pMap.leased_area_min} <![CDATA[ <= ]]> leased_area
+				</if>
+			  
+		    	<if test="pMap.full_option_room.toString() == 1 or 
+			    	pMap.airconditioner.toString() == 1 or 
+			    	pMap.refrigerator.toString() == 1 or 
+			    	pMap.washer.toString() == 1 or 
+			    	pMap.tv.toString() == 1 or 
+			    	pMap.microwave.toString() == 1 or 
+			    	pMap.induction.toString() == 1 or 
+			    	pMap.sink.toString() == 1 or 
+			    	pMap.gasrange.toString() == 1 or 
+			    	pMap.sofa.toString() == 1 or 
+			    	pMap.bed.toString() == 1 or 
+			    	pMap.built_in_closet.toString() == 1 or 
+			    	pMap.dressing_table.toString() == 1 or 
+			    	pMap.veranda.toString() == 1 or 
+			    	pMap.shoe_closet.toString() == 1 or 
+			    	pMap.door_security.toString() == 1 or 
+			    	pMap.cctv.toString() == 1 or 
+			    	pMap.number_key.toString() == 1 ">
+				    AND  
+				    (
+				    <if test="pMap.full_option_room.toString() == 1">  
+				     	full_option_room = 1          			 AND </if>
+			    	<if test="pMap.airconditioner.toString() == 1"> 
+				     	airconditioner = 1            			 AND </if>
+			    	<if test="pMap.refrigerator.toString() == 1"> 
+				     	refrigerator = 1            			 AND </if>
+			    	<if test="pMap.washer.toString() == 1"> 
+				     	washer = 1                   			 AND </if>
+			    	<if test="pMap.tv.toString() == 1">  
+				     	tv = 1                       			 AND </if>
+			    	<if test="pMap.microwave.toString() == 1"> 
+				     	microwave = 1                			 AND </if>
+			    	<if test="pMap.induction.toString() == 1">  
+				     	induction = 1               			 AND </if>
+			    	<if test="pMap.sink.toString() == 1">
+			    		other_option Like '%싱크대%'   			 AND </if> 
+			    	<if test="pMap.gasrange.toString() == 1"> 
+				     	gasrange = 1                 			 AND </if>
+			    	<if test="pMap.sofa.toString() == 1"> 
+			    	(   other_option Like '%소파%'    or
+			    		other_option Like '%쇼파%'    or
+			    		other_option Like '%sofa%' 
+			    	)  			                                 AND </if>
+			    	<if test="pMap.bed.toString() == 1"> 
+				     	bed = 1                      			 AND </if>
+			    	<if test="pMap.built_in_closet.toString() == 1"> 
+				     	built_in_closet = 1           			 AND </if>
+			    	<if test="pMap.dressing_table.toString() == 1"> 
+				     	dressing_table = 1           			 AND </if>
+			    	<if test="pMap.veranda.toString() == 1">  
+				     	veranda = 1                   			 AND </if> 
+			    	<if test="pMap.shoe_closet.toString() == 1"> 
+			    		other_option Like '%신발%'     			 AND </if>
+			    	<if test="pMap.door_security.toString() == 1"> 
+				     	security = 1                 			 AND </if>
+			    	<if test="pMap.cctv.toString() == 1"> 
+			    		other_option Like '%cctv%'    			 AND </if>  
+			    	<if test="pMap.number_key.toString() == 1"> 
+				     	digital_doorlock = 1         			 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.elevator.toString() == 1 or 
+			    	pMap.parking.toString() == 1 or 
+			    	pMap.animal.toString() == 1 or 
+			    	pMap.empty.toString() == 1 " >
+				    AND  
+				    (
+				    <if test="pMap.elevator.toString() == 1">  
+				     	elevator = 1          				 AND </if>
+			    	<if test="pMap.parking.toString() == 1"> 
+				     	parking = 1            				 AND </if>
+			    	<if test="pMap.animal.toString() == 1"> 
+				     	animal = 1            				 AND </if>
+			    	<if test="pMap.empty.toString() == 1"> 
+				     	empty = 1                   		 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.pic_keep.toString() == 1 or 
+			    	pMap.pic_none.toString() == 1" >
+				    AND  
+				    (
+				    <if test="pMap.pic_keep.toString() == 1">  
+				     	photo  = 1       	   		 	 AND </if>
+			    	<if test="pMap.pic_none.toString() == 1"> 
+				     	photo = 0         	  	 	 	 AND </if>
+			    		TRUE
+					) 
+				</if>			
+		    	<if test="pMap.movie_keep.toString() == 1 or 
+			    	pMap.movie_none.toString() == 1 " >
+				    AND  
+				    (
+			    	<if test="pMap.movie_keep.toString() == 1"> 
+				     	movie_url  is not null     			  AND </if>
+			    	<if test="pMap.movie_none.toString() == 1"> 
+				     	movie_url  is null         			  AND </if>
+			    	    TRUE
+					) 
+				</if>	
+				<if test="pMap.sale.toString() == 1">
+				    AND  
+				    (
+			    		close = 0 
+					) 
+				</if>
+			order by ${sort}
+			limit #{pg}, #{roomNumPerPage};
+	</select>
+	<!--filter와 지하철코드에 속하는 방의 개수를가져옴 -->
+	<select id="getCountRoomAboutMetroNo" resultType="Integer"
+		 parameterType="map" >
+			SELECT  count(*)
+		        from room_item ri 
+		        ,   specific_room_item sri, metro m , address_code ac
+		    <![CDATA[	
+		    	where ri.no = sri.item_no and(m.no = ri.metro1 or m.no = ri.metro2 or
+			m.no = ri.metro3 or m.no = ri.metro4 or m.no = ri.metro5) and m.no = #{metroNo} and ac.code = ri.local_code
+		    ]]>
+		    	<if test="pMap.trade.toString() == 1 
+		    		or pMap.charter.toString() == 2
+		    		or pMap.monthly_and_charter.toString() == 6
+		    		or pMap.monthly.toString() == 4 
+		    		or pMap.short_lease.toString() == 8">
+				    AND 
+				    (
+						<if test="pMap.trade.toString() == 1">                (0 != 1<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.charter.toString() == 2">              (0 != 2<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.monthly_and_charter.toString() == 6">  ((0 != 2<![CDATA[ & ]]>type) and (0 != 4<![CDATA[ & ]]>type))  OR </if>
+						<if test="pMap.monthly.toString() == 4">              (0 != 4<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.short_lease.toString() ==8">           (0 != 8<![CDATA[ & ]]>type) OR </if>
+						FALSE
+					) 
+				</if>
+				
+			   <if test="pMap.depositmax.toString() != 999999999">
+					AND 	deposit <![CDATA[ <= ]]> #{pMap.depositmax }
+				</if>
+				<if test="pMap.depositmin.toString() != 0">
+					AND 	#{pMap.depositmin} <![CDATA[ <= ]]> deposit
+				</if>
+				
+				<if test="pMap.monthmax.toString() != 999999999">
+					AND 	monthly_rent <![CDATA[ <= ]]> #{pMap.monthmax }
+				</if>
+				<if test="pMap.monthmin.toString() != 0">
+					AND 	#{pMap.monthmin} <![CDATA[ <= ]]> monthly_rent
+				</if>
+				
+				<if test="pMap.chartermax.toString() != 999999999">
+					AND 	charter_deposit <![CDATA[ <= ]]> #{pMap.chartermax }
+				</if>
+				<if test="pMap.chartermin.toString() != 0">
+					AND 	#{pMap.chartermin} <![CDATA[ <= ]]> charter_deposit
+				</if>
+				
+				<if test="pMap.standardmax.toString() != 999999999">
+					AND 	standard_deposit <![CDATA[ <= ]]> #{pMap.standardmax }
+				</if>
+				<if test="pMap.standardmin.toString() != 0">
+					AND 	#{pMap.standardmin} <![CDATA[ <= ]]> standard_deposit
+				</if>
+				
+		    	<if test="pMap.apartment.toString() == 1 
+		    		or pMap.officetel.toString() == 1
+		    		or pMap.house.toString() == 1
+		    		or pMap.normal_room.toString() == 1
+		    		or pMap.shop.toString() == 1
+		    		or pMap.office.toString() == 1
+		    		or pMap.building.toString() == 1
+		    		or pMap.redevelopment.toString() == 1
+		    		or pMap.event.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.apartment.toString() == 1">     apartment = 1        OR </if>
+						<if test="pMap.officetel.toString() == 1">     officetel = 1        OR </if>
+						<if test="pMap.house.toString() == 1">  	   house = 1            OR </if>
+						<if test="pMap.normal_room.toString() == 1">   normal_room = 1      OR </if>
+						<if test="pMap.shop.toString() == 1">  		   shop = 1             OR </if>
+						<if test="pMap.office.toString() == 1">  	   office = 1           OR </if>
+						<if test="pMap.building.toString() == 1">      building = 1         OR </if>
+						<if test="pMap.redevelopment.toString() == 1"> redevelopment = 1    OR </if>
+						<if test="pMap.event.toString() == 1">         event = 1            OR </if>
+						FALSE
+					) 
+				</if>
+				AND  built   between  0 AND   #{pMap.built}   
+				<if test="pMap.address.toString() != null and pMap.address.toString() != '' ">
+					AND  main_address = substring_index(#{pMap.address}, '-', 1) 
+						and  sub_address = substring_index(#{pMap.address}, '-', -1)
+ 				</if>
+ 				
+		    	<if test="pMap.open_room.toString() == 1 
+		    		or pMap.part_room.toString() == 1
+		    		or pMap.duplex_room.toString() == 1">
+				    and  
+				    (
+						<if test="pMap.open_room.toString() == 1">    room_type = 1 OR </if>
+						<if test="pMap.part_room.toString() == 1">    room_type = 2 OR </if>
+						<if test="pMap.duplex_room.toString() == 1">  room_type = 3 OR </if>
+						FALSE
+					) 
+				</if> 
+				
+		    	<if test="pMap.one_room.toString() == 1 
+		    		or pMap.two_room.toString() == 1
+		    		or pMap.three_room.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.one_room.toString() == 1">    room_count = 1  OR </if>
+						<if test="pMap.two_room.toString()  == 1">   room_count = 2  OR </if>
+						<if test="pMap.three_room.toString() == 1">  room_count = 3  OR </if>
+						FALSE
+					) 
+				</if>	
+				
+		    	<if test="pMap.up_ground.toString() == 1 
+		    		or pMap.under_ground.toString() == 1
+		    		or pMap.semi_basement.toString() == 1
+		    		or pMap.rooftop.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.semi_basement.toString() == 1"> semi_basement = 1 or  floor_no = 0	 OR </if>
+						<if test="pMap.rooftop.toString() == 1">       rooftop = 1                			 OR </if>
+						<if test="pMap.under_ground.toString() == 1">  floor_no  between -5 and -1 		 	 OR </if>
+						<if test="pMap.up_ground.toString() == 1">     floor_no  between  1 and 90 			 OR </if>
+						FALSE
+					) 
+				</if>	
+				 
+				<if test="pMap.exclusive_area_max.toString() != 999999999">
+					AND 	exclusive_area <![CDATA[ <= ]]> #{pMap.exclusive_area_max }
+				</if>
+				<if test="pMap.exclusive_area_min.toString() != 0">
+					AND 	#{pMap.exclusive_area_min} <![CDATA[ <= ]]> exclusive_area
+				</if>
+					
+				<if test="pMap.leased_area_max.toString() != 999999999">
+					AND 	leased_area <![CDATA[ <= ]]> #{pMap.leased_area_max }
+				</if>
+				<if test="pMap.leased_area_min.toString() != 0">
+					AND 	#{pMap.leased_area_min} <![CDATA[ <= ]]> leased_area
+				</if>
+			  
+		    	<if test="pMap.full_option_room.toString() == 1 or 
+			    	pMap.airconditioner.toString() == 1 or 
+			    	pMap.refrigerator.toString() == 1 or 
+			    	pMap.washer.toString() == 1 or 
+			    	pMap.tv.toString() == 1 or 
+			    	pMap.microwave.toString() == 1 or 
+			    	pMap.induction.toString() == 1 or 
+			    	pMap.sink.toString() == 1 or 
+			    	pMap.gasrange.toString() == 1 or 
+			    	pMap.sofa.toString() == 1 or 
+			    	pMap.bed.toString() == 1 or 
+			    	pMap.built_in_closet.toString() == 1 or 
+			    	pMap.dressing_table.toString() == 1 or 
+			    	pMap.veranda.toString() == 1 or 
+			    	pMap.shoe_closet.toString() == 1 or 
+			    	pMap.door_security.toString() == 1 or 
+			    	pMap.cctv.toString() == 1 or 
+			    	pMap.number_key.toString() == 1 ">
+				    AND  
+				    (
+				    <if test="pMap.full_option_room.toString() == 1">  
+				     	full_option_room = 1          			 AND </if>
+			    	<if test="pMap.airconditioner.toString() == 1"> 
+				     	airconditioner = 1            			 AND </if>
+			    	<if test="pMap.refrigerator.toString() == 1"> 
+				     	refrigerator = 1            			 AND </if>
+			    	<if test="pMap.washer.toString() == 1"> 
+				     	washer = 1                   			 AND </if>
+			    	<if test="pMap.tv.toString() == 1">  
+				     	tv = 1                       			 AND </if>
+			    	<if test="pMap.microwave.toString() == 1"> 
+				     	microwave = 1                			 AND </if>
+			    	<if test="pMap.induction.toString() == 1">  
+				     	induction = 1               			 AND </if>
+			    	<if test="pMap.sink.toString() == 1">
+			    		other_option Like '%싱크대%'   			 AND </if> 
+			    	<if test="pMap.gasrange.toString() == 1"> 
+				     	gasrange = 1                 			 AND </if>
+			    	<if test="pMap.sofa.toString() == 1"> 
+			    	(   other_option Like '%소파%'    or
+			    		other_option Like '%쇼파%'    or
+			    		other_option Like '%sofa%' 
+			    	)  			                                 AND </if>
+			    	<if test="pMap.bed.toString() == 1"> 
+				     	bed = 1                      			 AND </if>
+			    	<if test="pMap.built_in_closet.toString() == 1"> 
+				     	built_in_closet = 1           			 AND </if>
+			    	<if test="pMap.dressing_table.toString() == 1"> 
+				     	dressing_table = 1           			 AND </if>
+			    	<if test="pMap.veranda.toString() == 1">  
+				     	veranda = 1                   			 AND </if> 
+			    	<if test="pMap.shoe_closet.toString() == 1"> 
+			    		other_option Like '%신발%'     			 AND </if>
+			    	<if test="pMap.door_security.toString() == 1"> 
+				     	security = 1                 			 AND </if>
+			    	<if test="pMap.cctv.toString() == 1"> 
+			    		other_option Like '%cctv%'    			 AND </if>  
+			    	<if test="pMap.number_key.toString() == 1"> 
+				     	digital_doorlock = 1         			 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.elevator.toString() == 1 or 
+			    	pMap.parking.toString() == 1 or 
+			    	pMap.animal.toString() == 1 or 
+			    	pMap.empty.toString() == 1 " >
+				    AND  
+				    (
+				    <if test="pMap.elevator.toString() == 1">  
+				     	elevator = 1          				 AND </if>
+			    	<if test="pMap.parking.toString() == 1"> 
+				     	parking = 1            				 AND </if>
+			    	<if test="pMap.animal.toString() == 1"> 
+				     	animal = 1            				 AND </if>
+			    	<if test="pMap.empty.toString() == 1"> 
+				     	empty = 1                   		 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.pic_keep.toString() == 1 or 
+			    	pMap.pic_none.toString() == 1" >
+				    AND  
+				    (
+				    <if test="pMap.pic_keep.toString() == 1">  
+				     	photo  = 1       	   		 	 AND </if>
+			    	<if test="pMap.pic_none.toString() == 1"> 
+				     	photo = 0         	  	 	 	 AND </if>
+			    		TRUE
+					) 
+				</if>			
+		    	<if test="pMap.movie_keep.toString() == 1 or 
+			    	pMap.movie_none.toString() == 1 " >
+				    AND  
+				    (
+			    	<if test="pMap.movie_keep.toString() == 1"> 
+				     	movie_url  is not null     			  AND </if>
+			    	<if test="pMap.movie_none.toString() == 1"> 
+				     	movie_url  is null         			  AND </if>
+			    	    TRUE
+					) 
+				</if>	
+				<if test="pMap.sale.toString() == 1">
+				    AND  
+				    (
+			    		close = 0 
+					) 
+				</if> 
+	</select>
+
+	<!--filter와 지도에 속하는 방의 정보들을  get -->
+	<select id="getSpecificRoomItemAboutFilterGeo" resultType="com.gnbang.webserver.object.SearchRoomSumary"
+		 parameterType="map" >
+			SELECT         *
+		        from room_item ri
+		        , specific_room_item sri, address_code ac 
+		    <![CDATA[	
+		    	where sri.item_no = ri.no and 
+			 #{s} <lat  and lat < #{n} and  #{w} <lng and lng < #{e} and ac.code = ri.local_code
+		    ]]>
+		    	<if test="pMap.trade.toString() == 1 
+		    		or pMap.charter.toString() == 2
+		    		or pMap.monthly_and_charter.toString() == 6
+		    		or pMap.monthly.toString() == 4 
+		    		or pMap.short_lease.toString() == 8">
+				    AND 
+				    (
+						<if test="pMap.trade.toString() == 1">                (0 != 1<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.charter.toString() == 2">              (0 != 2<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.monthly_and_charter.toString() == 6">  ((0 != 2<![CDATA[ & ]]>type) and (0 != 4<![CDATA[ & ]]>type))  OR </if>
+						<if test="pMap.monthly.toString() == 4">              (0 != 4<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.short_lease.toString() ==8">           (0 != 8<![CDATA[ & ]]>type) OR </if>
+						FALSE
+					) 
+				</if>
+				
+			    <if test="pMap.depositmax.toString() != 999999999">
+					AND 	deposit <![CDATA[ <= ]]> #{pMap.depositmax }
+				</if>
+				<if test="pMap.depositmin.toString() != 0">
+					AND 	#{pMap.depositmin} <![CDATA[ <= ]]> deposit
+				</if>
+				
+				<if test="pMap.monthmax.toString() != 999999999">
+					AND 	monthly_rent <![CDATA[ <= ]]> #{pMap.monthmax }
+				</if>
+				<if test="pMap.monthmin.toString() != 0">
+					AND 	#{pMap.monthmin} <![CDATA[ <= ]]> monthly_rent
+				</if>
+				
+				<if test="pMap.chartermax.toString() != 999999999">
+					AND 	charter_deposit <![CDATA[ <= ]]> #{pMap.chartermax }
+				</if>
+				<if test="pMap.chartermin.toString() != 0">
+					AND 	#{pMap.chartermin} <![CDATA[ <= ]]> charter_deposit
+				</if>
+				
+				<if test="pMap.standardmax.toString() != 999999999">
+					AND 	standard_deposit <![CDATA[ <= ]]> #{pMap.standardmax }
+				</if>
+				<if test="pMap.standardmin.toString() != 0">
+					AND 	#{pMap.standardmin} <![CDATA[ <= ]]> standard_deposit
+				</if>
+				
+		    	<if test="pMap.apartment.toString() == 1 
+		    		or pMap.officetel.toString() == 1
+		    		or pMap.house.toString() == 1
+		    		or pMap.normal_room.toString() == 1
+		    		or pMap.shop.toString() == 1
+		    		or pMap.office.toString() == 1
+		    		or pMap.building.toString() == 1
+		    		or pMap.redevelopment.toString() == 1
+		    		or pMap.event.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.apartment.toString() == 1">     apartment = 1        OR </if>
+						<if test="pMap.officetel.toString() == 1">     officetel = 1        OR </if>
+						<if test="pMap.house.toString() == 1">  	   house = 1            OR </if>
+						<if test="pMap.normal_room.toString() == 1">   normal_room = 1      OR </if>
+						<if test="pMap.shop.toString() == 1">  		   shop = 1             OR </if>
+						<if test="pMap.office.toString() == 1">  	   office = 1           OR </if>
+						<if test="pMap.building.toString() == 1">      building = 1         OR </if>
+						<if test="pMap.redevelopment.toString() == 1"> redevelopment = 1    OR </if>
+						<if test="pMap.event.toString() == 1">         event = 1            OR </if>
+						FALSE
+					) 
+				</if>
+				AND  built   between  0 AND   #{pMap.built}   
+				<if test="pMap.address.toString() != null and pMap.address.toString() != '' ">
+					AND  main_address = substring_index(#{pMap.address}, '-', 1) 
+						and  sub_address = substring_index(#{pMap.address}, '-', -1)
+ 				</if>
+ 				
+		    	<if test="pMap.open_room.toString() == 1 
+		    		or pMap.part_room.toString() == 1
+		    		or pMap.duplex_room.toString() == 1">
+				    and  
+				    (
+						<if test="pMap.open_room.toString() == 1">    room_type = 1 OR </if>
+						<if test="pMap.part_room.toString() == 1">    room_type = 2 OR </if>
+						<if test="pMap.duplex_room.toString() == 1">  room_type = 3 OR </if>
+						FALSE
+					) 
+				</if> 
+				
+		    	<if test="pMap.one_room.toString() == 1 
+		    		or pMap.two_room.toString() == 1
+		    		or pMap.three_room.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.one_room.toString() == 1">    room_count = 1  OR </if>
+						<if test="pMap.two_room.toString()  == 1">   room_count = 2  OR </if>
+						<if test="pMap.three_room.toString() == 1">  room_count = 3  OR </if>
+						FALSE
+					) 
+				</if>	
+				
+		    	<if test="pMap.up_ground.toString() == 1 
+		    		or pMap.under_ground.toString() == 1
+		    		or pMap.semi_basement.toString() == 1
+		    		or pMap.rooftop.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.semi_basement.toString() == 1"> semi_basement = 1                	 OR </if>
+						<if test="pMap.rooftop.toString() == 1">       rooftop = 1                			 OR </if>
+						<if test="pMap.under_ground.toString() == 1">  floor_no  between -5 and -1 		 	 OR </if>
+						<if test="pMap.up_ground.toString() == 1">     floor_no  between  1 and 90 			 OR </if>
+						FALSE
+					) 
+				</if>	
+				
+			    <if test="pMap.exclusive_area_max.toString() != 999999999">
+					AND 	exclusive_area <![CDATA[ <= ]]> #{pMap.exclusive_area_max }
+				</if>
+				<if test="pMap.exclusive_area_min.toString() != 0">
+					AND 	#{pMap.exclusive_area_min} <![CDATA[ <= ]]> exclusive_area
+				</if>
+					
+				<if test="pMap.leased_area_max.toString() != 999999999">
+					AND 	leased_area <![CDATA[ <= ]]> #{pMap.leased_area_max }
+				</if>
+				<if test="pMap.leased_area_min.toString() != 0">
+					AND 	#{pMap.leased_area_min} <![CDATA[ <= ]]> leased_area
+				</if>
+			    
+		    	<if test="pMap.full_option_room.toString() == 1 or 
+			    	pMap.airconditioner.toString() == 1 or 
+			    	pMap.refrigerator.toString() == 1 or 
+			    	pMap.washer.toString() == 1 or 
+			    	pMap.tv.toString() == 1 or 
+			    	pMap.microwave.toString() == 1 or 
+			    	pMap.induction.toString() == 1 or 
+			    	pMap.sink.toString() == 1 or 
+			    	pMap.gasrange.toString() == 1 or 
+			    	pMap.sofa.toString() == 1 or 
+			    	pMap.bed.toString() == 1 or 
+			    	pMap.built_in_closet.toString() == 1 or 
+			    	pMap.dressing_table.toString() == 1 or 
+			    	pMap.veranda.toString() == 1 or 
+			    	pMap.shoe_closet.toString() == 1 or 
+			    	pMap.door_security.toString() == 1 or 
+			    	pMap.cctv.toString() == 1 or 
+			    	pMap.number_key.toString() == 1 ">
+				    AND  
+				    (
+				    <if test="pMap.full_option_room.toString() == 1">  
+				     	full_option_room = 1          			 AND </if>
+			    	<if test="pMap.airconditioner.toString() == 1"> 
+				     	airconditioner = 1            			 AND </if>
+			    	<if test="pMap.refrigerator.toString() == 1"> 
+				     	refrigerator = 1            			 AND </if>
+			    	<if test="pMap.washer.toString() == 1"> 
+				     	washer = 1                   			 AND </if>
+			    	<if test="pMap.tv.toString() == 1">  
+				     	tv = 1                       			 AND </if>
+			    	<if test="pMap.microwave.toString() == 1"> 
+				     	microwave = 1                			 AND </if>
+			    	<if test="pMap.induction.toString() == 1">  
+				     	induction = 1               			 AND </if>
+			    	<if test="pMap.sink.toString() == 1">
+			    		other_option Like '%싱크대%'   			 AND </if> 
+			    	<if test="pMap.gasrange.toString() == 1"> 
+				     	gasrange = 1                 			 AND </if>
+			    	<if test="pMap.sofa.toString() == 1"> 
+			    	(   other_option Like '%소파%'    or
+			    		other_option Like '%쇼파%'    or
+			    		other_option Like '%sofa%' 
+			    	)  			                                 AND </if>
+			    	<if test="pMap.bed.toString() == 1"> 
+				     	bed = 1                      			 AND </if>
+			    	<if test="pMap.built_in_closet.toString() == 1"> 
+				     	built_in_closet = 1           			 AND </if>
+			    	<if test="pMap.dressing_table.toString() == 1"> 
+				     	dressing_table = 1           			 AND </if>
+			    	<if test="pMap.veranda.toString() == 1">  
+				     	veranda = 1                   			 AND </if> 
+			    	<if test="pMap.shoe_closet.toString() == 1"> 
+			    		other_option Like '%신발%'     			 AND </if>
+			    	<if test="pMap.door_security.toString() == 1"> 
+				     	security = 1                 			 AND </if>
+			    	<if test="pMap.cctv.toString() == 1"> 
+			    		other_option Like '%cctv%'    			 AND </if>  
+			    	<if test="pMap.number_key.toString() == 1"> 
+				     	digital_doorlock = 1         			 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.elevator.toString() == 1 or 
+			    	pMap.parking.toString() == 1 or 
+			    	pMap.animal.toString() == 1 or 
+			    	pMap.empty.toString() == 1 " >
+				    AND  
+				    (
+				    <if test="pMap.elevator.toString() == 1">  
+				     	elevator = 1          				 AND </if>
+			    	<if test="pMap.parking.toString() == 1"> 
+				     	parking = 1            				 AND </if>
+			    	<if test="pMap.animal.toString() == 1"> 
+				     	animal = 1            				 AND </if>
+			    	<if test="pMap.empty.toString() == 1"> 
+				     	empty = 1                   		 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.pic_keep.toString() == 1 or 
+			    	pMap.pic_none.toString() == 1" >
+				    AND  
+				    (
+				    <if test="pMap.pic_keep.toString() == 1">  
+				     	photo  = 1       	   		 	 AND </if>
+			    	<if test="pMap.pic_none.toString() == 1"> 
+				     	photo = 0         	  	 	 	 AND </if>
+			    		TRUE
+					) 
+				</if>			
+		    	<if test="pMap.movie_keep.toString() == 1 or 
+			    	pMap.movie_none.toString() == 1 " >
+				    AND  
+				    (
+			    	<if test="pMap.movie_keep.toString() == 1"> 
+				     	movie_url  is not null     			  AND </if>
+			    	<if test="pMap.movie_none.toString() == 1"> 
+				     	movie_url  is null         			  AND </if>
+			    	    TRUE
+					) 
+				</if>	
+				<if test="pMap.sale.toString() == 1">
+				    AND  
+				    (
+			    		close = 0 
+					) 
+				</if>
+			order by ${sort}
+			limit #{pg}, #{roomNumPerPage};
+	</select>
+	<!--filter와 지도에 속하는 방의 개수를 가져옴 -->
+	<select id="getCountRoomAboutGeo" resultType="Integer"
+		 parameterType="map" >
+			SELECT count(*) 
+		        from room_item ri 
+		        , specific_room_item sri, address_code ac 
+		    <![CDATA[	
+		    	where sri.item_no = ri.no and 
+			 #{s} <lat  and lat < #{n} and  #{w} <lng and lng < #{e} and ac.code = ri.local_code
+		    ]]>
+		    	<if test="pMap.trade.toString() == 1 
+		    		or pMap.charter.toString() == 2
+		    		or pMap.monthly_and_charter.toString() == 6
+		    		or pMap.monthly.toString() == 4 
+		    		or pMap.short_lease.toString() == 8">
+				    AND 
+				    (
+						<if test="pMap.trade.toString() == 1">                (0 != 1<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.charter.toString() == 2">              (0 != 2<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.monthly_and_charter.toString() == 6">  ((0 != 2<![CDATA[ & ]]>type) and (0 != 4<![CDATA[ & ]]>type))  OR </if>
+						<if test="pMap.monthly.toString() == 4">              (0 != 4<![CDATA[ & ]]>type)  OR </if>
+						<if test="pMap.short_lease.toString() ==8">           (0 != 8<![CDATA[ & ]]>type) OR </if>
+						FALSE
+					) 
+				</if>
+				
+			    <if test="pMap.depositmax.toString() != 999999999">
+					AND 	deposit <![CDATA[ <= ]]> #{pMap.depositmax }
+				</if>
+				<if test="pMap.depositmin.toString() != 0">
+					AND 	#{pMap.depositmin} <![CDATA[ <= ]]> deposit
+				</if>
+				
+				<if test="pMap.monthmax.toString() != 999999999">
+					AND 	monthly_rent <![CDATA[ <= ]]> #{pMap.monthmax }
+				</if>
+				<if test="pMap.monthmin.toString() != 0">
+					AND 	#{pMap.monthmin} <![CDATA[ <= ]]> monthly_rent
+				</if>
+				
+				<if test="pMap.chartermax.toString() != 999999999">
+					AND 	charter_deposit <![CDATA[ <= ]]> #{pMap.chartermax }
+				</if>
+				<if test="pMap.chartermin.toString() != 0">
+					AND 	#{pMap.chartermin} <![CDATA[ <= ]]> charter_deposit
+				</if>
+				
+				<if test="pMap.standardmax.toString() != 999999999">
+					AND 	standard_deposit <![CDATA[ <= ]]> #{pMap.standardmax }
+				</if>
+				<if test="pMap.standardmin.toString() != 0">
+					AND 	#{pMap.standardmin} <![CDATA[ <= ]]> standard_deposit
+				</if>
+				
+		    	<if test="pMap.apartment.toString() == 1 
+		    		or pMap.officetel.toString() == 1
+		    		or pMap.house.toString() == 1
+		    		or pMap.normal_room.toString() == 1
+		    		or pMap.shop.toString() == 1
+		    		or pMap.office.toString() == 1
+		    		or pMap.building.toString() == 1
+		    		or pMap.redevelopment.toString() == 1
+		    		or pMap.event.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.apartment.toString() == 1">     apartment = 1        OR </if>
+						<if test="pMap.officetel.toString() == 1">     officetel = 1        OR </if>
+						<if test="pMap.house.toString() == 1">  	   house = 1            OR </if>
+						<if test="pMap.normal_room.toString() == 1">   normal_room = 1      OR </if>
+						<if test="pMap.shop.toString() == 1">  		   shop = 1             OR </if>
+						<if test="pMap.office.toString() == 1">  	   office = 1           OR </if>
+						<if test="pMap.building.toString() == 1">      building = 1         OR </if>
+						<if test="pMap.redevelopment.toString() == 1"> redevelopment = 1    OR </if>
+						<if test="pMap.event.toString() == 1">         event = 1            OR </if>
+						FALSE
+					) 
+				</if>
+				AND  built   between  0 AND   #{pMap.built}   
+				<if test="pMap.address.toString() != null and pMap.address.toString() != '' ">
+					AND  main_address = substring_index(#{pMap.address}, '-', 1) 
+						and  sub_address = substring_index(#{pMap.address}, '-', -1)
+ 				</if>
+ 				
+		    	<if test="pMap.open_room.toString() == 1 
+		    		or pMap.part_room.toString() == 1
+		    		or pMap.duplex_room.toString() == 1">
+				    and  
+				    (
+						<if test="pMap.open_room.toString() == 1">    room_type = 1 OR </if>
+						<if test="pMap.part_room.toString() == 1">    room_type = 2 OR </if>
+						<if test="pMap.duplex_room.toString() == 1">  room_type = 3 OR </if>
+						FALSE
+					) 
+				</if> 
+				
+		    	<if test="pMap.one_room.toString() == 1 
+		    		or pMap.two_room.toString() == 1
+		    		or pMap.three_room.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.one_room.toString() == 1">    room_count = 1  OR </if>
+						<if test="pMap.two_room.toString()  == 1">   room_count = 2  OR </if>
+						<if test="pMap.three_room.toString() == 1">  room_count = 3  OR </if>
+						FALSE
+					) 
+				</if>	
+				
+		    	<if test="pMap.up_ground.toString() == 1 
+		    		or pMap.under_ground.toString() == 1
+		    		or pMap.semi_basement.toString() == 1
+		    		or pMap.rooftop.toString() == 1">
+				    AND  
+				    (
+						<if test="pMap.semi_basement.toString() == 1"> semi_basement = 1                	 OR </if>
+						<if test="pMap.rooftop.toString() == 1">       rooftop = 1                			 OR </if>
+						<if test="pMap.under_ground.toString() == 1">  floor_no  between -5 and -1 		 	 OR </if>
+						<if test="pMap.up_ground.toString() == 1">     floor_no  between  1 and 90 			 OR </if>
+						FALSE
+					) 
+				</if>	
+				
+			    <if test="pMap.exclusive_area_max.toString() != 999999999">
+					AND 	exclusive_area <![CDATA[ <= ]]> #{pMap.exclusive_area_max }
+				</if>
+				<if test="pMap.exclusive_area_min.toString() != 0">
+					AND 	#{pMap.exclusive_area_min} <![CDATA[ <= ]]> exclusive_area
+				</if>
+					
+				<if test="pMap.leased_area_max.toString() != 999999999">
+					AND 	leased_area <![CDATA[ <= ]]> #{pMap.leased_area_max }
+				</if>
+				<if test="pMap.leased_area_min.toString() != 0">
+					AND 	#{pMap.leased_area_min} <![CDATA[ <= ]]> leased_area
+				</if>
+			    
+		    	<if test="pMap.full_option_room.toString() == 1 or 
+			    	pMap.airconditioner.toString() == 1 or 
+			    	pMap.refrigerator.toString() == 1 or 
+			    	pMap.washer.toString() == 1 or 
+			    	pMap.tv.toString() == 1 or 
+			    	pMap.microwave.toString() == 1 or 
+			    	pMap.induction.toString() == 1 or 
+			    	pMap.sink.toString() == 1 or 
+			    	pMap.gasrange.toString() == 1 or 
+			    	pMap.sofa.toString() == 1 or 
+			    	pMap.bed.toString() == 1 or 
+			    	pMap.built_in_closet.toString() == 1 or 
+			    	pMap.dressing_table.toString() == 1 or 
+			    	pMap.veranda.toString() == 1 or 
+			    	pMap.shoe_closet.toString() == 1 or 
+			    	pMap.door_security.toString() == 1 or 
+			    	pMap.cctv.toString() == 1 or 
+			    	pMap.number_key.toString() == 1 ">
+				    AND  
+				    (
+				    <if test="pMap.full_option_room.toString() == 1">  
+				     	full_option_room = 1          			 AND </if>
+			    	<if test="pMap.airconditioner.toString() == 1"> 
+				     	airconditioner = 1            			 AND </if>
+			    	<if test="pMap.refrigerator.toString() == 1"> 
+				     	refrigerator = 1            			 AND </if>
+			    	<if test="pMap.washer.toString() == 1"> 
+				     	washer = 1                   			 AND </if>
+			    	<if test="pMap.tv.toString() == 1">  
+				     	tv = 1                       			 AND </if>
+			    	<if test="pMap.microwave.toString() == 1"> 
+				     	microwave = 1                			 AND </if>
+			    	<if test="pMap.induction.toString() == 1">  
+				     	induction = 1               			 AND </if>
+			    	<if test="pMap.sink.toString() == 1">
+			    		other_option Like '%싱크대%'   			 AND </if> 
+			    	<if test="pMap.gasrange.toString() == 1"> 
+				     	gasrange = 1                 			 AND </if>
+			    	<if test="pMap.sofa.toString() == 1"> 
+			    	(   other_option Like '%소파%'    or
+			    		other_option Like '%쇼파%'    or
+			    		other_option Like '%sofa%' 
+			    	)  			                                 AND </if>
+			    	<if test="pMap.bed.toString() == 1"> 
+				     	bed = 1                      			 AND </if>
+			    	<if test="pMap.built_in_closet.toString() == 1"> 
+				     	built_in_closet = 1           			 AND </if>
+			    	<if test="pMap.dressing_table.toString() == 1"> 
+				     	dressing_table = 1           			 AND </if>
+			    	<if test="pMap.veranda.toString() == 1">  
+				     	veranda = 1                   			 AND </if> 
+			    	<if test="pMap.shoe_closet.toString() == 1"> 
+			    		other_option Like '%신발%'     			 AND </if>
+			    	<if test="pMap.door_security.toString() == 1"> 
+				     	security = 1                 			 AND </if>
+			    	<if test="pMap.cctv.toString() == 1"> 
+			    		other_option Like '%cctv%'    			 AND </if>  
+			    	<if test="pMap.number_key.toString() == 1"> 
+				     	digital_doorlock = 1         			 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.elevator.toString() == 1 or 
+			    	pMap.parking.toString() == 1 or 
+			    	pMap.animal.toString() == 1 or 
+			    	pMap.empty.toString() == 1 " >
+				    AND  
+				    (
+				    <if test="pMap.elevator.toString() == 1">  
+				     	elevator = 1          				 AND </if>
+			    	<if test="pMap.parking.toString() == 1"> 
+				     	parking = 1            				 AND </if>
+			    	<if test="pMap.animal.toString() == 1"> 
+				     	animal = 1            				 AND </if>
+			    	<if test="pMap.empty.toString() == 1"> 
+				     	empty = 1                   		 AND </if>
+			    		TRUE
+					) 
+				</if>	
+				
+		    	<if test="pMap.pic_keep.toString() == 1 or 
+			    	pMap.pic_none.toString() == 1" >
+				    AND  
+				    (
+				    <if test="pMap.pic_keep.toString() == 1">  
+				     	photo  = 1       	   		 	 AND </if>
+			    	<if test="pMap.pic_none.toString() == 1"> 
+				     	photo = 0         	  	 	 	 AND </if>
+			    		TRUE
+					) 
+				</if>			
+		    	<if test="pMap.movie_keep.toString() == 1 or 
+			    	pMap.movie_none.toString() == 1 " >
+				    AND  
+				    (
+			    	<if test="pMap.movie_keep.toString() == 1"> 
+				     	movie_url  is not null     			  AND </if>
+			    	<if test="pMap.movie_none.toString() == 1"> 
+				     	movie_url  is null         			  AND </if>
+			    	    TRUE
+					) 
+				</if>	
+				<if test="pMap.sale.toString() == 1">
+				    AND  
+				    (
+			    		close = 0 
+					) 
+				</if>
+	</select>
+	<!--지하철역 이름에 맞는 지하철역 코드를 가져옴 -->
+	<select id="getMetroCodeAboutMetroName" parameterType ="String" resultType ="Integer">
+			select no from metro where name = #{metroName};
+	</select>
+	 
+	<!-- 매물번호에 맞는 사진 ftp 경로 get -->
+	<select id="getFakeUrlList" parameterType ="Integer" resultType ="String">
+			select fake_url 
+			from room_photo rp, room_item ri 
+			where ri.no = rp.room_item_no 
+			and room_item_no = #{no}
+			and rp.is_use=1 
+			order by rp.order;
+	</select>
+	
+	<!-- 매물번호에 맞는 찜번호 get -->
+	<select id="getZzimNo" parameterType ="map" resultType ="Integer">
+			select no 
+			from zzim
+			where room_item_no = #{no} and user_no = #{loginNo};
+	</select>
+	
+	
+</mapper>

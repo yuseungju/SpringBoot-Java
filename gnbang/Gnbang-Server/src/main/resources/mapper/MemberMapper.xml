@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gnbang.webserver.mapper.MemberMapper">
+	
+	<!-- 비밀번호와 이메일이 같은 회원을 가져옴(비밀번호 일치 여부 확인시 사용) -->
+	<select id="getEncodePassword" resultType="com.gnbang.webserver.dto.UserVO" parameterType="String">
+				select password from user 
+				where email = #{email};
+	</select>
+	<!-- 회원번호에 해당하는 연락처를 가져옴 -->
+	<select id="getPhone" resultType="String" parameterType="Integer">
+				select phone from user 
+				where no = #{no};
+	</select>
+	<!-- 회원번호에 해당되는 연락처를 수정 -->
+	<update id="updatePhone" parameterType ="map">
+				update user  set phone = #{phone} where no = #{no};
+	</update>
+	
+	<!-- 이메일에 해당되는 회원의 탈퇴여부를 탈퇴상태로 설정 -->
+	<update id="updateLeaveDate"  parameterType="String">
+				update user set leave_date = CURRENT_TIMESTAMP(6)
+				where email = #{email};
+	</update>
+	<!--이메일에 해당되는 회원의 비밀번호 수정 -->
+	<update id="updatePassword"  parameterType="map">
+				update user set `password` = #{password}
+				where email = #{email};
+	</update>
+	<!--사용자의 연락처를 수정 -->
+	<update id="updatePhoneInUserAboutUserNo"  parameterType="map">
+				update user set `phone` = #{phone}
+				where user_no = #{loginNo};
+	</update>
+	<!--이메일에 해당되는 회원의 비밀번호 수정 -->
+	<update id="updatePhotoUrl"  parameterType="map">
+				update user set photo_url = #{photoUrl}
+				where no = #{loginNo};
+	</update>
+	<!-- 회원번호와 같은 프로필사진을 get -->
+	<select id="getPhotoUrl" resultType="String" parameterType="Integer">
+				select photo_url from user 
+				where no = #{loginNo};
+	</select>
+	<!-- 관심 고객폴더 번호에 해당되는 관심고객폴더 정보를 하나 가져옴 -->
+	<select id="getCartListAboutCartListNo" resultType="com.gnbang.webserver.dto.RoomItemCartListVO" parameterType="Integer">
+				select* from room_item_cart_list  
+		        where no = #{roomItemCartListNo};
+	</select>
+	<!-- 사용자의 사용 맥주소를 변경 -->
+	<update id="updateMacAddress"  parameterType="map">
+                update user_agent set mac_address = #{mac_address}
+                where user_no =  #{loginNo};
+	</update>
+	<!-- 사용자의 사용 맥주소를가져옴-->
+	<select id="getMacAddress" parameterType="Integer" resultType="String">
+                select mac_address from user_agent 
+                where user_no =  #{loginNo};
+	</select>
+	<!-- 사용자의 사용 pc인증 토큰을 변경 -->
+	<update id="updatePcToken"  parameterType="map">
+				update user_agent set pc_token = #{pc_token}
+				where user_no = #{loginNo};
+	</update>
+</mapper>

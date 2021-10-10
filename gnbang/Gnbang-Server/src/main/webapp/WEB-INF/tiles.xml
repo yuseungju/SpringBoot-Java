@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE tiles-definitions PUBLIC
+       "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN"
+       "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+<tiles-definitions>
+
+	<definition name="layout.test" template="/WEB-INF/jsp/testTemplate.jsp">
+		<put-attribute name="body" value="" />
+	</definition>
+	<definition name="test" extends="layout.test">
+		<put-attribute name="body" value="/WEB-INF/jsp/test.jsp" />
+	</definition>
+	
+	<!--template: basic pages-->
+	<definition name="layout.basic" template="/WEB-INF/jsp/template/basic_template.jsp">
+		<put-attribute name="header" value="/WEB-INF/jsp/header/header.jsp" />
+		<put-attribute name="body" value="" />
+		<put-attribute name="footer" value="/WEB-INF/jsp/footer/footer.jsp" />
+		<put-attribute name="rightNav" value="/WEB-INF/jsp/right_nav/right_nav.jsp" />
+		<put-attribute name="loginPopUP" value="/WEB-INF/jsp/pop_up/login_pop_up.jsp" />
+		<put-attribute name="popUp" value="" />
+	</definition>
+	
+	<!--template: search, zzim, recently pages-->
+	<definition name="layout.main" template="/WEB-INF/jsp/template/main_template.jsp">
+		<put-attribute name="header" value="/WEB-INF/jsp/header/header.jsp" />
+		<put-attribute name="body" value="" />
+		<put-attribute name="footer" value="/WEB-INF/jsp/footer/footer.jsp" />
+		<put-attribute name="rightNav" value="/WEB-INF/jsp/right_nav/right_nav.jsp" />
+		<put-attribute name="leftNav" value="/WEB-INF/jsp/left_nav/main_nav.jsp" />
+		<put-attribute name="underNav" value="/WEB-INF/jsp/underNav/attentionRoom.jsp" />
+		<put-attribute name="map" value="" />
+		<put-attribute name="loginPopUP" value="/WEB-INF/jsp/pop_up/login_pop_up.jsp" />
+		<put-attribute name="popUp" value="" />
+	</definition>
+	
+	<!--template: member pages-->
+	<definition name="layout.member" template="/WEB-INF/jsp/template/mypage_template.jsp">
+		<put-attribute name="header" value="/WEB-INF/jsp/header/header.jsp" />
+		<put-attribute name="page_header" value="" />
+		<put-attribute name="body" value="" />
+		<put-attribute name="leftNav" value="/WEB-INF/jsp/left_nav/mypage_nav.jsp"/>
+		<put-attribute name="loginPopUP" value="/WEB-INF/jsp/pop_up/login_pop_up.jsp" />
+		<put-attribute name="rightNav" value="/WEB-INF/jsp/right_nav/right_nav.jsp" />
+		<put-attribute name="popUp" value="" />
+	</definition>
+	
+	<!-- member page -->
+	<definition name="member.agent.modify_infor.mypage" extends="layout.member">
+		<put-attribute name="page_header" value="/WEB-INF/jsp/sub_header/member/agent/modify_infor/mypage.jsp" />
+		<put-attribute name="body" value="/WEB-INF/jsp/body/member/agent/modify_infor/mypage.jsp" />
+	</definition>
+	<definition name="member.agent.modify_password.password" extends="layout.member">
+		<put-attribute name="page_header" value="/WEB-INF/jsp/sub_header/member/agent/modify_password/password.jsp" />
+		<put-attribute name="body" value="/WEB-INF/jsp/body/member/agent/modify_password/password.jsp" />
+	</definition>
+	<definition name="member.agent.interest.interest" extends="layout.member">
+		<put-attribute name="page_header" value="/WEB-INF/jsp/sub_header/member/agent/interest/interest.jsp" />
+		<put-attribute name="body" value="/WEB-INF/jsp/body/member/agent/interest/interest.jsp" />
+	</definition>
+	<definition name="member.agent.interest.detail" extends="layout.member">
+		<put-attribute name="page_header" value="/WEB-INF/jsp/sub_header/member/agent/interest/interest.jsp" />
+		<put-attribute name="body" value="/WEB-INF/jsp/body/member/agent/interest/detail.jsp" />
+	</definition>
+	<definition name="member.agent.picture.picture" extends="layout.member">
+		<put-attribute name="page_header" value="/WEB-INF/jsp/sub_header/member/agent/picture/picture.jsp" />
+		<put-attribute name="body" value="/WEB-INF/jsp/body/member/agent/picture/picture.jsp" />
+	</definition>
+	<definition name="member.agent.picture.modify" extends="layout.member">
+		<put-attribute name="page_header" value="/WEB-INF/jsp/sub_header/member/agent/picture/picture.jsp" />
+		<put-attribute name="body" value="/WEB-INF/jsp/body/member/agent/picture/modify.jsp" />
+	</definition>
+	<definition name="member.agent.hardware_enroll.hardware_enroll" extends="layout.member">
+		<put-attribute name="page_header" value="/WEB-INF/jsp/sub_header/member/agent/hardware_enroll/hardware_enroll.jsp" />
+		<put-attribute name="body" value="/WEB-INF/jsp/body/member/agent/hardware_enroll/hardware_enroll.jsp" />
+	</definition>
+	
+	<!-- join Pages-->
+	<definition name="join.user" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/join/user.jsp" />
+	</definition>
+	<definition name="join.lessor" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/join/lessor.jsp" />
+	</definition>
+	<definition name="join.agent" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/join/agent.jsp" />
+	</definition>
+	
+	<!-- search page -->
+	<definition name="search.search" extends="layout.main">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/search/search.jsp" />
+		<put-attribute name="map" value="/WEB-INF/jsp/map/search/basic.jsp" />
+	</definition>
+		<definition name="search.zzim" extends="layout.main">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/search/zzim.jsp" />
+		<put-attribute name="map"  value="/WEB-INF/jsp/map/search/zzim.jsp"/>
+	</definition>
+	<definition name="search.recently" extends="layout.main">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/search/recently.jsp" />
+		<put-attribute name="map"  value="/WEB-INF/jsp/map/search/recently.jsp"/>
+	</definition>
+	
+	<!-- consult page -->
+	<definition name="consult.consult" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/consult/consult.jsp" />
+	</definition>
+	<definition name="consult.edit" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/consult/edit.jsp" />
+	</definition>
+	<definition name="consult.result" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/consult/result.jsp" />
+	</definition>
+	<definition name="consult.write" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/consult/write.jsp" />
+	</definition>
+	
+	<!-- room page -->
+	<definition name="room.common.detail" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/room/common/detail.jsp" />
+		<put-attribute name="popUp" value="/WEB-INF/jsp/pop_up/room/common/detail.jsp" />
+	</definition>
+	<definition name="room.user.enroll" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/room/user/enroll.jsp" />
+		<put-attribute name="side" value="/WEB-INF/jsp/side/skip.jsp" />
+	</definition>
+	<definition name="room.agent.enrolled" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/room/agent/enrolled.jsp" />
+	</definition>
+	<definition name="room.agent.modify" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/room/agent/modify.jsp" />
+	</definition>
+<!-- 	<definition name="room.waitPermission" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/room/user/wait_permission.jsp" />
+	</definition> -->
+	<definition name="room.user.not_permission" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/room/user/not_permission.jsp" />
+	</definition>
+	<definition name="room.agent_and_user.enroll_overlap_check" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/room/agent_and_user/enroll_overlap_check.jsp" />
+		<put-attribute name="popUp" value="/WEB-INF/jsp/pop_up/room/agent_and_user/enroll_overlap_check.jsp" />
+	</definition>
+	<definition name="room.agent_and_user.enroll_complete" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/room/agent_and_user/enroll_complete.jsp" />
+	</definition>
+	<definition name="room.agent_and_user.enroll_information" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/body/room/agent_and_user/enroll_information.jsp" />
+	</definition>
+	
+	<!-- login page -->
+	<definition name="new_password" extends="layout.basic">
+		<put-attribute name="body" value="/WEB-INF/jsp/new_password.jsp" />
+	</definition>
+	
+	
+</tiles-definitions>

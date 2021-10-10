@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.gnbang.webserver.mapper.UserRoleMapper">
+   <select id ="getUserAndRole" resultType ="com.gnbang.webserver.security.domain.UserAndRole" parameterType="String">
+	SELECT u.email as 'email' ,
+	      u.password as 'password', 
+	      rl.role as 'role' , u.level as level 
+	       , u.type as type 
+	         , u.phone as phone
+	         , u.date as date 
+	         , u.no as no 
+             , u.name as name
+             , u.photo_url as photoUrl
+             , ua.mac_address as mac_address
+	 FROM user u LEFT JOIN user_agent ua ON u.no = ua.user_no, role r, role_list rl 
+	 where  u.no = r.user_no and r.role_list_no = rl.no and u.email = #{username} and  `leave_date` is null;
+   </select>
+</mapper>
+
